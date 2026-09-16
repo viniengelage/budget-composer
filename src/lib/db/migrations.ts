@@ -1,17 +1,6 @@
 import { type Database } from "@/lib/db/types";
 
-/**
- * Migrações versionadas via `PRAGMA user_version`.
- *
- * Sem ferramenta externa de propósito: o schema tem 4 tabelas e o banco vive
- * na máquina de uma pessoa só. Um runner de 20 linhas cobre o caso e não
- * adiciona passo de codegen ao build — que, no Windows, já é a parte difícil.
- *
- * REGRA: migração já publicada nunca é editada. Só se acrescenta ao fim do
- * array. O banco da usuária tem os dados reais do negócio dela.
- */
 const MIGRATIONS: readonly string[][] = [
-  // v1 — schema inicial
   [
     `CREATE TABLE products (
       id                TEXT PRIMARY KEY NOT NULL,
@@ -23,9 +12,7 @@ const MIGRATIONS: readonly string[][] = [
       created_at        TEXT NOT NULL,
       updated_at        TEXT NOT NULL
     )`,
-    // Busca por nome é a operação mais frequente da tela de produtos.
     `CREATE INDEX idx_products_name ON products (name)`,
-    // Produto arquivado some da lista, mas continua existindo para o histórico.
     `CREATE INDEX idx_products_archived ON products (archived_at)`,
 
     `CREATE TABLE customers (
@@ -72,8 +59,6 @@ const MIGRATIONS: readonly string[][] = [
     )`,
     `CREATE INDEX idx_quote_items_quote ON quote_items (quote_id)`,
 
-    // Contador de numeração. Apagar um orçamento não pode reaproveitar o número:
-    // dois documentos com o mesmo número na mão do cliente é problema real.
     `CREATE TABLE counters (
       name  TEXT PRIMARY KEY NOT NULL,
       value INTEGER NOT NULL
@@ -102,9 +87,6 @@ export async function migrate(db: Database): Promise<number> {
     await db.transaction(async (tx) => {
       for (const sql of statements) await tx.execute(sql);
     });
-
-    // PRAGMA não aceita parâmetro vinculado; o valor vem do índice do laço,
-    // nunca de entrada do usuário.
     await db.execute(`PRAGMA user_version = ${version + 1}`);
   }
 

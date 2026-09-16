@@ -1,13 +1,3 @@
-/**
- * Design tokens — espelho fiel dos token sets do Penpot
- * (`orcamentos-core` e `orcamentos-semantic`).
- *
- * REGRA: nenhum componente declara cor, espaçamento ou raio literal.
- * Sempre consumir daqui. Se falta um valor, adicione um token — não um literal.
- */
-
-/* ---------- Tier 1: primitivas (orcamentos-core) ---------- */
-
 export const palette = {
   brand50: "#E9F5EC",
   brand100: "#CDE9D6",
@@ -33,7 +23,6 @@ export const palette = {
   warning50: "#FDF3E3",
 } as const;
 
-/** Escala de 4px. Todo espaçamento sai daqui. */
 export const space = {
   1: 4,
   2: 8,
@@ -70,18 +59,11 @@ export const fontWeight = {
   bold: "700",
 } as const;
 
-/**
- * Altura mínima de alvo clicável. 44px é o piso das WCAG/HIG.
- * `lg` é o padrão das ações primárias desta app — o público-alvo tem
- * baixa familiaridade com computador, então alvos generosos são requisito.
- */
 export const control = {
   sm: 40,
   md: 48,
   lg: 56,
 } as const;
-
-/* ---------- Tier 2: semânticas (orcamentos-semantic) ---------- */
 
 export const color = {
   bg: {
@@ -117,7 +99,6 @@ export const color = {
     pending: { bg: palette.warning50, text: palette.warning600 },
     expired: { bg: palette.danger50, text: palette.danger600 },
   },
-  /** Scrim do modal. Único valor com alfa — tokens de cor do Penpot não carregam opacidade. */
   overlay: "rgba(12, 21, 18, 0.62)",
 } as const;
 

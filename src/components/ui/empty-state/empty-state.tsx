@@ -9,7 +9,6 @@ import { color, radius, space } from "@/styles/tokens";
 export interface EmptyStateProps {
   icon: IconName;
   title: string;
-  /** Explique o valor da ação, não só a ausência de dados. */
   description: string;
   tone?: "brand" | "neutral";
   children?: ReactNode;

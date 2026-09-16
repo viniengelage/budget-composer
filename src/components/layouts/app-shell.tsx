@@ -32,7 +32,6 @@ export function PageHeader({ title, subtitle, action, leading }: PageHeaderProps
   );
 }
 
-/** Área de conteúdo de uma rota: cabeçalho + corpo, com o respiro padrão. */
 export function Page({ header, children }: { header: ReactNode; children: ReactNode }) {
   return (
     <View style={styles.page}>

@@ -95,7 +95,6 @@ describe("formatPhone", () => {
 
 describe("datas", () => {
   test("formata sem deslocar o dia por fuso horário", () => {
-    // `new Date("2026-08-01")` em UTC-3 voltaria para 31/07. Não pode acontecer.
     expect(formatDate("2026-08-01")).toBe("01/08/2026");
     expect(formatDate("2026-01-01")).toBe("01/01/2026");
   });

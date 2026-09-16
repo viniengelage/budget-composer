@@ -3,13 +3,6 @@ import { z } from "zod";
 import { env } from "@/config/env";
 import { onlyDigits } from "@/utils/format";
 
-/**
- * Cliente da consulta pública de CNPJ (BrasilAPI).
- *
- * O schema valida só o que a tela consome. A API devolve dezenas de campos
- * (QSA, CNAEs, regime tributário); aceitar tudo cegamente faria qualquer
- * mudança no contrato virar erro de runtime dentro do formulário.
- */
 const companySchema = z.object({
   cnpj: z.string(),
   razao_social: z.string(),
@@ -35,18 +28,10 @@ export interface CompanyLookup {
   city: string;
   state: string;
   zipCode: string;
-  /** `false` quando a empresa está BAIXADA, SUSPENSA, INAPTA etc. */
   isActive: boolean;
   registrationStatus: string;
 }
 
-/**
- * Resultado explícito em vez de exceção.
- *
- * Cada variante corresponde a um estado desenhado do campo CNPJ
- * (ver board `Spec / Campo CNPJ — estados e API` no Penpot), então a tela
- * consegue tratar todos os casos sem try/catch espalhado.
- */
 export type CnpjLookupResult =
   | { status: "found"; company: CompanyLookup }
   | { status: "not-found" }

@@ -44,8 +44,6 @@ export function QuoteList({
     );
   }
 
-  // Busca sem resultado e lista realmente vazia são problemas diferentes,
-  // e por isso levam a saídas diferentes.
   if (quotes.length === 0 && searchTerm !== "") {
     return (
       <EmptyState

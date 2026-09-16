@@ -20,13 +20,6 @@ export interface TextProps extends RNTextProps {
   tone?: Tone;
 }
 
-/**
- * Único ponto de entrada para texto.
- *
- * O público-alvo tem baixa familiaridade com computador e provável présbita,
- * então o corpo de texto é 17px — um degrau acima do padrão web de 16px.
- * Nenhuma variante desce abaixo de 13px.
- */
 export function Text({ variant = "body", tone = "primary", style, ...rest }: TextProps) {
   return <RNText {...rest} style={[styles[variant], toneStyles[tone], style]} />;
 }

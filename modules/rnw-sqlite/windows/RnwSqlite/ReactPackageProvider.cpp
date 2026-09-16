@@ -14,8 +14,7 @@ namespace winrt::RnwSqlite::implementation {
 
 void ReactPackageProvider::CreatePackage(
     IReactPackageBuilder const& packageBuilder) noexcept {
-  // `true` = registra tambem como turbo module na nova arquitetura, para o
-  // TurboModuleRegistry do lado JS conseguir encontrar.
+
   AddAttributedModules(packageBuilder, true);
 }
 

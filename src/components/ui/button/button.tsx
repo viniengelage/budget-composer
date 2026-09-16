@@ -35,13 +35,6 @@ const FONT_SIZES: Record<Size, number> = {
   lg: fontSize.md,
 };
 
-/**
- * Botão sempre rotulado.
- *
- * Não existe variante só-ícone de propósito: para quem não usa computador
- * com frequência, um ícone solto não comunica ação. `icon` é sempre um
- * reforço do texto, nunca substituto.
- */
 export function Button({
   label,
   icon,

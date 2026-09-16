@@ -8,13 +8,6 @@ import {
   type SqlValue,
 } from "@/lib/db/types";
 
-/**
- * Driver de SQLite para `bun test`.
- *
- * NÃO é empacotado no app — `bun:sqlite` só existe no runtime do Bun. Serve
- * para rodar migrações e repositórios contra um SQLite DE VERDADE nos testes,
- * em vez de um dublê em memória que aceita SQL inválido e esconde bug.
- */
 function wrap(db: BunDatabase): Database {
   const api: Database = {
     async execute(sql, params = []) {
@@ -22,9 +15,7 @@ function wrap(db: BunDatabase): Database {
         const statement = db.query(sql);
         statement.run(...(params as SqlValue[]));
 
-        const changes = db
-          .query<{ c: number }, []>("SELECT changes() AS c")
-          .get();
+        const changes = db.query<{ c: number }, []>("SELECT changes() AS c").get();
         const lastId = db
           .query<{ id: number }, []>("SELECT last_insert_rowid() AS id")
           .get();

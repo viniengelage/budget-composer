@@ -7,38 +7,19 @@
 #include <winsqlite/winsqlite3.h>
 
 #include <cstdlib>
-#include <cstring>    // _strnicmp
+#include <cstring>
 #include <filesystem>
 #include <map>
 #include <mutex>
-#include <stdexcept>  // std::runtime_error
+#include <stdexcept>
 #include <string>
 
 namespace winrt::RnwSqlite {
 
 namespace React = winrt::Microsoft::ReactNative;
 
-// ---------------------------------------------------------------------------
-// Módulo nativo de SQLite para React Native Windows.
-//
-// SQLITE VEM DO SISTEMA (winsqlite3), não vendorizado.
-// O Windows 10 1803+ embarca winsqlite3.dll e o SDK traz winsqlite/winsqlite3.h
-// e winsqlite3.lib. Isso evita colocar a amalgamation de ~9 MB no repositório
-// e um passo de download no build. Se a versão do SQLite do sistema virar
-// problema, trocar para a amalgamation é contido: muda este include, o .lib
-// em AdditionalDependencies e nada mais.
-//
-// MODELO DE CONCORRÊNCIA
-// Métodos REACT_METHOD com ReactPromise rodam na fila assíncrona do módulo,
-// fora da thread de JS. O mapa de handles é protegido por mutex porque nada
-// garante que duas chamadas não caiam em threads diferentes.
-// ---------------------------------------------------------------------------
-
 REACT_MODULE(RnwSqliteModule, L"RnwSqlite");
 struct RnwSqliteModule {
-  // -------------------------------------------------------------------------
-  // open
-  // -------------------------------------------------------------------------
   REACT_METHOD(Open, L"open");
   void Open(std::string name, React::ReactPromise<double> promise) noexcept {
     try {
@@ -58,8 +39,6 @@ struct RnwSqliteModule {
         return;
       }
 
-      // Espera em vez de devolver SQLITE_BUSY na hora. O app é de um usuário
-      // só, mas uma transação longa não pode derrubar outra chamada.
       sqlite3_busy_timeout(handle, 5000);
 
       std::lock_guard<std::mutex> lock(m_mutex);
@@ -71,9 +50,6 @@ struct RnwSqliteModule {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // close
-  // -------------------------------------------------------------------------
   REACT_METHOD(Close, L"close");
   void Close(double handleId, React::ReactPromise<void> promise) noexcept {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -89,9 +65,6 @@ struct RnwSqliteModule {
     promise.Resolve();
   }
 
-  // -------------------------------------------------------------------------
-  // execute — INSERT / UPDATE / DELETE / DDL
-  // -------------------------------------------------------------------------
   REACT_METHOD(Execute, L"execute");
   void Execute(double handleId, std::string sql, React::JSValueArray params,
                React::ReactPromise<React::JSValue> promise) noexcept {
@@ -114,15 +87,10 @@ struct RnwSqliteModule {
     sqlite3_finalize(statement);
 
     React::JSValueObject result;
-    // Cast explícito: JSValue tem construtores para bool, int64_t e double,
-    // e um `int` cru deixaria a escolha da sobrecarga ambígua.
     result["rowsAffected"] = static_cast<double>(sqlite3_changes(db));
 
-    // insertId só faz sentido em INSERT. Devolver o rowid de um DELETE
-    // levaria o chamador a gravar um id que não é dele.
     if (IsInsert(sql)) {
-      result["insertId"] =
-          static_cast<double>(sqlite3_last_insert_rowid(db));
+      result["insertId"] = static_cast<double>(sqlite3_last_insert_rowid(db));
     } else {
       result["insertId"] = nullptr;
     }
@@ -130,9 +98,6 @@ struct RnwSqliteModule {
     promise.Resolve(React::JSValue(std::move(result)));
   }
 
-  // -------------------------------------------------------------------------
-  // query — SELECT
-  // -------------------------------------------------------------------------
   REACT_METHOD(Query, L"query");
   void Query(double handleId, std::string sql, React::JSValueArray params,
              React::ReactPromise<React::JSValue> promise) noexcept {
@@ -158,10 +123,8 @@ struct RnwSqliteModule {
 
         switch (sqlite3_column_type(statement, index)) {
           case SQLITE_INTEGER:
-            // JS não tem inteiro de 64 bits. Valores do domínio (centavos,
-            // números de orçamento) cabem com folga em double.
-            row[column] = static_cast<double>(
-                sqlite3_column_int64(statement, index));
+            row[column] =
+                static_cast<double>(sqlite3_column_int64(statement, index));
             break;
           case SQLITE_FLOAT:
             row[column] = sqlite3_column_double(statement, index);
@@ -210,13 +173,6 @@ struct RnwSqliteModule {
     return _strnicmp(sql.c_str() + at, "insert", 6) == 0;
   }
 
-  /**
-   * Compila a instrução e vincula os parâmetros.
-   *
-   * Vincular é obrigatório — nunca concatenar valor em SQL. Fora a injeção,
-   * concatenação quebra em nome com apóstrofo, e "Espaço D'Ávila" é um nome
-   * de cliente perfeitamente comum.
-   */
   template <typename TPromise>
   bool Prepare(sqlite3* db, const std::string& sql,
                const React::JSValueArray& params, sqlite3_stmt** statement,
@@ -236,8 +192,8 @@ struct RnwSqliteModule {
           status = sqlite3_bind_null(*statement, position);
           break;
         case React::JSValueType::Boolean:
-          status = sqlite3_bind_int(*statement, position,
-                                    param.AsBoolean() ? 1 : 0);
+          status =
+              sqlite3_bind_int(*statement, position, param.AsBoolean() ? 1 : 0);
           break;
         case React::JSValueType::Int64:
           status = sqlite3_bind_int64(*statement, position, param.AsInt64());
@@ -247,7 +203,6 @@ struct RnwSqliteModule {
           break;
         default: {
           const std::string text = param.AsString();
-          // SQLITE_TRANSIENT: o SQLite copia. `text` morre no fim do escopo.
           status = sqlite3_bind_text(*statement, position, text.c_str(),
                                      static_cast<int>(text.size()),
                                      SQLITE_TRANSIENT);
@@ -269,15 +224,7 @@ struct RnwSqliteModule {
     return true;
   }
 
-  /**
-   * Resolve o caminho do arquivo em %LOCALAPPDATA%\OrcamentosGrameira\.
-   *
-   * Usa a variável de ambiente, e não ApplicationData::Current(), porque esta
-   * lança exceção quando o app roda sem empacotamento MSIX — que é justamente
-   * o modo em que rodamos durante o desenvolvimento.
-   */
   static std::string ResolveDatabasePath(const std::string& name) {
-    // Banco em memória é para teste: não tem arquivo, não tem pasta.
     if (name == ":memory:") return name;
 
     const char* localAppData = std::getenv("LOCALAPPDATA");

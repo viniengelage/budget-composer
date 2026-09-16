@@ -6,11 +6,6 @@ import { Text } from "@/components/ui/text/text";
 import { color, radius, space } from "@/styles/tokens";
 import type { QuoteStatus } from "@/types";
 
-/**
- * Status nunca é comunicado só por cor — sempre cor + ícone + palavra.
- * Daltonismo afeta ~8% dos homens, e o rótulo escrito também ajuda quem
- * simplesmente não memorizou o código de cores.
- */
 const STATUS_CONFIG: Record<
   QuoteStatus,
   { label: string; icon: IconName; bg: string; fg: string }

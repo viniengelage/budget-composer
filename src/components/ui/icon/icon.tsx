@@ -6,7 +6,6 @@ import { color } from "@/styles/tokens";
 export interface IconProps {
   name: IconName;
   size?: number;
-  /** Deve vir de `color.*` dos tokens, nunca um literal. */
   tint?: string;
 }
 

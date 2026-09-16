@@ -5,13 +5,6 @@ import type { Quote } from "@/types";
 const collection = createCollection<Quote>("quotes");
 const COUNTER_KEY = "quotes:last-number";
 
-/**
- * Numeração sequencial dos orçamentos.
- *
- * O contador vive separado da coleção: apagar um orçamento NÃO pode
- * reaproveitar o número. Orçamento é documento entregue ao cliente —
- * dois documentos diferentes com o mesmo número é um problema real.
- */
 async function nextNumber(): Promise<number> {
   const last = (await storage.get<number>(COUNTER_KEY)) ?? 0;
   const next = last + 1;
@@ -40,7 +33,6 @@ export const quotesRepository = {
     return collection.save({ ...quote, updatedAt: new Date().toISOString() });
   },
 
-  /** Ajusta o contador ao migrar dados de outro sistema. */
   async setLastNumber(value: number) {
     await storage.set(COUNTER_KEY, value);
   },

@@ -4,7 +4,6 @@ import { ROUTES, type RouteName } from "@/config/routes";
 
 interface NavigationState {
   route: RouteName;
-  /** Rota anterior, para o botão "Voltar" dos formulários. */
   previousRoute: RouteName | null;
   navigate: (route: RouteName) => void;
   goBack: () => void;

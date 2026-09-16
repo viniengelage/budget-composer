@@ -55,8 +55,6 @@ export function Router() {
   return (
     <View style={styles.shell}>
       <Sidebar
-        // Antes de configurar a empresa, a barra mostra um nome neutro
-        // em vez de um espaço em branco.
         companyName={company?.name?.trim() || "Minha empresa"}
         currentRoute={route}
         onNavigate={navigate}
@@ -68,7 +66,6 @@ export function Router() {
   );
 }
 
-// TODO(fase 2): abrir a janela de ajuda.
 function handleHelp() {}
 
 const styles = StyleSheet.create({

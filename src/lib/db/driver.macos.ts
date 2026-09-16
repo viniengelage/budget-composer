@@ -7,15 +7,6 @@ import {
   type SqlValue,
 } from "@/lib/db/types";
 
-/**
- * Driver de SQLite para macOS (e iOS), via expo-sqlite.
- *
- * Verificado: o podspec declara `:osx => '11.0'` e o pod `ExpoSQLite` integra
- * no projeto macOS gerado pelo prebuild.
- *
- * O expo-sqlite resolve sozinho a pasta de dados do app, então `name` é só o
- * nome do arquivo.
- */
 function wrap(db: SQLite.SQLiteDatabase): Database {
   const api: Database = {
     async execute(sql, params = []) {
@@ -40,7 +31,6 @@ function wrap(db: SQLite.SQLiteDatabase): Database {
 
     async transaction(fn) {
       let result!: Awaited<ReturnType<typeof fn>>;
-      // withTransactionAsync já faz rollback se o callback lançar.
       await db.withTransactionAsync(async () => {
         result = await fn(api);
       });

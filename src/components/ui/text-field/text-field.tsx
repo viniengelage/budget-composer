@@ -9,16 +9,13 @@ import { color, control, fontSize, radius, space } from "@/styles/tokens";
 export type FieldTone = "default" | "success" | "error" | "warning";
 
 export interface TextFieldProps extends Omit<TextInputProps, "style"> {
-  /** Sempre visível. Placeholder nunca substitui rótulo. */
   label: string;
   optional?: boolean;
   hint?: string;
   tone?: FieldTone;
   leadingIcon?: IconName;
   trailingIcon?: IconName;
-  /** Texto fixo à esquerda do valor, ex.: "R$". */
   prefix?: string;
-  /** Texto fixo à direita do valor, ex.: "por m²". */
   suffix?: string;
 }
 
@@ -36,13 +33,6 @@ const TONE_TEXT: Record<FieldTone, "secondary" | "brand" | "danger"> = {
   warning: "danger",
 };
 
-/**
- * Campo de texto com rótulo visível e mensagem de apoio.
- *
- * `tone` cobre os estados desenhados no board `Spec / Campo CNPJ` do Penpot:
- * neutro, sucesso (dados preenchidos), erro (não encontrado) e alerta
- * (empresa baixada na Receita).
- */
 export function TextField({
   label,
   optional = false,

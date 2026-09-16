@@ -25,14 +25,11 @@ describe("calculateItemTotal", () => {
   });
 
   test("arredonda quantidade fracionada para o centavo", () => {
-    // 12,5 m² × R$ 1,80 = R$ 22,50
     expect(calculateItemTotal(item(12.5, 180))).toBe(2250);
-    // 3 × R$ 0,335 => arredonda para cima no centavo
     expect(calculateItemTotal(item(3, 33.5))).toBe(101);
   });
 
   test("não acumula erro de ponto flutuante", () => {
-    // 0.1 + 0.2 !== 0.3 em float; em centavos isso não pode vazar
     expect(calculateItemTotal(item(3, 10))).toBe(30);
     expect(calculateItemTotal(item(0.3, 100))).toBe(30);
   });
@@ -40,11 +37,7 @@ describe("calculateItemTotal", () => {
 
 describe("calculateSubtotal", () => {
   test("soma os itens do orçamento de referência", () => {
-    const items = [
-      item(250, 900, "a"), // R$ 2.250,00
-      item(250, 180, "b"), // R$   450,00
-      item(1, 15000, "c"), // R$   150,00
-    ];
+    const items = [item(250, 900, "a"), item(250, 180, "b"), item(1, 15000, "c")];
     expect(calculateSubtotal(items)).toBe(285000);
   });
 

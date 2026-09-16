@@ -1,17 +1,4 @@
 #!/usr/bin/env bun
-/**
- * Build de release para desktop.
- *
- *   bun run build              -> detecta o SO e builda o alvo possível
- *   bun run build:macos        -> força macOS  (exige macOS + Xcode)
- *   bun run build:windows      -> força Windows (exige Windows + Visual Studio)
- *
- * LIMITAÇÃO REAL, não contornável: react-native-macos compila só em macOS
- * (Xcode) e react-native-windows só em Windows (MSBuild/VS). Não existe
- * cross-compile. Para gerar os dois a partir de uma máquina só, use o
- * workflow em .github/workflows/build.yml, que roda cada alvo no runner
- * correspondente.
- */
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
@@ -44,10 +31,6 @@ async function run(command: string[], label: string): Promise<void> {
   if (exitCode !== 0) fail(`"${label}" falhou com código ${exitCode}.`);
 }
 
-/**
- * As pastas nativas são geradas (CNG) e ficam fora do git, então uma
- * máquina limpa ou um runner de CI sempre precisa do prebuild antes.
- */
 async function ensureNativeProject(platform: Platform): Promise<void> {
   const marker = platform === "macos" ? MACOS_WORKSPACE : WINDOWS_SOLUTION;
   if (existsSync(join(ROOT, marker))) return;
@@ -75,7 +58,6 @@ async function buildMacos(): Promise<void> {
 
   await ensureNativeProject("macos");
 
-  // Ver scripts/patch-macos-pods.ts para o porquê.
   step("Alinhando deployment target dos pods");
   const patch = await patchMacosPods();
   console.log(`  Podfile: ${patch}`);

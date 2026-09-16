@@ -1,23 +1,4 @@
 #!/usr/bin/env bun
-/**
- * Alinha o MACOSX_DEPLOYMENT_TARGET de todos os pods ao do app.
- *
- * POR QUE ISTO EXISTE
- * Vários pods (RNSVG, AsyncStorage, EXConstants…) declaram deployment target
- * 10.14–11.0 nos seus podspecs. O Xcode 26+ aceita no mínimo 12.0 e falha o
- * build com:
- *
- *   error: The macOS deployment target 'MACOSX_DEPLOYMENT_TARGET' is set to
- *   11.0, but the range of supported deployment target versions is 12.0 to 27.0
- *
- * Atinge principalmente os *resource bundle targets* que o CocoaPods cria para
- * os privacy manifests — eles não herdam a configuração do app.
- *
- * POR QUE COMO SCRIPT, E NÃO EDITANDO O PODFILE
- * `macos/` é gerado pelo prebuild (CNG) e está no .gitignore. Qualquer edição
- * manual ali evapora no próximo prebuild. Este patch é idempotente e roda
- * automaticamente dentro de `bun run build`.
- */
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 

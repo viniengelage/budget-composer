@@ -6,7 +6,6 @@ import { color, radius, space } from "@/styles/tokens";
 
 export interface CardProps extends ViewProps {
   title?: string;
-  /** Número do passo no formulário. Guia a ordem de preenchimento. */
   step?: number;
   headerAction?: ReactNode;
   children: ReactNode;

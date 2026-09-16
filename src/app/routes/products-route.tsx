@@ -66,7 +66,6 @@ export function ProductsRoute() {
   );
 }
 
-// TODO(fase 2): abrir o modal de cadastro de produto.
 function handleCreate() {}
 
 const styles = StyleSheet.create({

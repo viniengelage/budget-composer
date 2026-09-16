@@ -69,7 +69,6 @@ export function QuotesRoute() {
   );
 }
 
-// TODO(fase 2): abrir o orçamento em edição e gerar o PDF.
 function handleOpen(_quote: Quote) {}
 function handleExport(_quote: Quote) {}
 

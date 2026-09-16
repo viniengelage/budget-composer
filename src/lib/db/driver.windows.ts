@@ -9,10 +9,6 @@ import {
   type RnwSqliteModule,
 } from "@modules/rnw-sqlite/src/NativeRnwSqlite";
 
-/**
- * Driver de SQLite para Windows, sobre o módulo nativo C++/WinRT `RnwSqlite`
- * (ver `modules/rnw-sqlite/windows`).
- */
 function requireNative(): RnwSqliteModule {
   if (NativeRnwSqlite === null) {
     throw new Error(
@@ -44,14 +40,6 @@ function wrap(handle: number): Database {
       }
     },
 
-    /**
-     * Transação em SQL puro.
-     *
-     * O nativo não expõe API de transação de propósito: BEGIN/COMMIT/ROLLBACK
-     * são instruções comuns, então resolver aqui deixa o C++ com quatro
-     * métodos em vez de sete. Menos C++ é menos superfície para depurar numa
-     * plataforma que não temos como testar localmente.
-     */
     async transaction(fn) {
       await api.execute("BEGIN");
       try {

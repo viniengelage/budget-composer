@@ -11,13 +11,6 @@ export interface PlaceholderRouteProps {
   description: string;
 }
 
-/**
- * Rota ainda não implementada.
- *
- * Existe para que a navegação inteira funcione desde o primeiro dia — clicar
- * num item da barra lateral e cair numa tela em branco é pior do que uma
- * tela que assume o que falta.
- */
 export function PlaceholderRoute({
   title,
   subtitle,

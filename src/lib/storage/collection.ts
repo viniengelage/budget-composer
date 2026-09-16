@@ -12,13 +12,6 @@ export interface Collection<T extends Entity> {
   replaceAll(entities: T[]): Promise<void>;
 }
 
-/**
- * Coleção persistida em uma única chave.
- *
- * Adequado à escala deste app (centenas de registros, um usuário, uma
- * máquina). Se o volume crescer a ponto de reescrever o array inteiro doer,
- * a troca por SQLite acontece aqui dentro, sem tocar nas features.
- */
 export function createCollection<T extends Entity>(key: string): Collection<T> {
   async function list(): Promise<T[]> {
     return (await storage.get<T[]>(key)) ?? [];
