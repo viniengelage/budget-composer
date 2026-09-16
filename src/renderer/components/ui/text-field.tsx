@@ -9,10 +9,15 @@ export interface TextFieldProps extends Omit<ComponentPropsWithRef<"input">, "si
   /** Rótulo visível sempre. Placeholder nunca substitui rótulo. */
   label: string;
   optional?: boolean;
+  /** Esconde o rótulo visualmente, mantendo-o para leitores de tela.
+   *  Use só quando a coluna da tabela já diz o que o campo é. */
+  hideLabel?: boolean;
   hint?: ReactNode;
   tone?: FieldTone;
   leadingIcon?: IconName;
   trailingIcon?: IconName;
+  /** Elemento no fim do campo (ex.: indicador de carregando). Vence o `trailingIcon`. */
+  trailing?: ReactNode;
   prefix?: string;
   suffix?: string;
 }
@@ -41,10 +46,12 @@ const TRAILING: Record<FieldTone, string> = {
 export function TextField({
   label,
   optional = false,
+  hideLabel = false,
   hint,
   tone = "default",
   leadingIcon,
   trailingIcon,
+  trailing,
   prefix,
   suffix,
   readOnly,
@@ -58,7 +65,10 @@ export function TextField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-semibold text-content">
+      <label
+        htmlFor={inputId}
+        className={cn("text-sm font-semibold text-content", hideLabel && "sr-only")}
+      >
         {label}
         {optional ? (
           <span className="font-normal text-content-muted"> (opcional)</span>
@@ -94,7 +104,11 @@ export function TextField({
         {suffix ? (
           <span className="text-sm font-medium text-content-muted">{suffix}</span>
         ) : null}
-        {trailingIcon ? (
+        {trailing ? (
+          <span className={cn("flex shrink-0 items-center", TRAILING[tone])}>
+            {trailing}
+          </span>
+        ) : trailingIcon ? (
           <Icon name={trailingIcon} size={22} className={TRAILING[tone]} />
         ) : null}
       </div>

@@ -21,6 +21,7 @@ import {
   deleteQuote,
   getQuote,
   listQuotes,
+  peekNextQuoteNumber,
   setQuoteStatus,
   updateQuote,
 } from "@main/modules/quotes/quotes-repository";
@@ -53,6 +54,7 @@ export const requestHandlers: Handlers = {
   updateCustomer: ({ id, input }) =>
     attempt(() => updateCustomer(getDatabase(), id, input)),
 
+  nextQuoteNumber: () => attempt(() => peekNextQuoteNumber(getDatabase())),
   listQuotes: ({ search }) => attempt(() => listQuotes(getDatabase(), search)),
   getQuote: ({ id }) => attempt(() => getQuote(getDatabase(), id)),
   createQuote: ({ input }) => attempt(() => createQuote(getDatabase(), input)),

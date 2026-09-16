@@ -1,6 +1,6 @@
 import { Button, Modal, SelectField, TextField } from "@/components/ui";
+import { UNIT_OPTIONS } from "@/config/units";
 import {
-  UNIT_OPTIONS,
   productFormSchema,
   type ProductFormValues,
 } from "@/features/products/types/product-schema";

@@ -1,5 +1,6 @@
 import { PlaceholderRoute } from "@/app/routes/placeholder-route";
 import { ProductsRoute } from "@/app/routes/products-route";
+import { QuoteCreateRoute } from "@/app/routes/quote-create-route";
 import { QuotesRoute } from "@/app/routes/quotes-route";
 import { ROUTES, type RouteName } from "@/config/routes";
 
@@ -12,14 +13,7 @@ export function Router({ route }: { route: RouteName }) {
       return <ProductsRoute />;
 
     case ROUTES.quoteCreate:
-      return (
-        <PlaceholderRoute
-          title="Novo orçamento"
-          subtitle="Monte o orçamento em três passos"
-          icon="note-pencil"
-          description="A tela de montar orçamento é o próximo passo. Por enquanto, volte para a lista pelo menu ao lado."
-        />
-      );
+      return <QuoteCreateRoute />;
 
     case ROUTES.customers:
       return (

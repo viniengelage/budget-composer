@@ -7,6 +7,7 @@ import {
   deleteQuote,
   getQuote,
   listQuotes,
+  peekNextQuoteNumber,
   setQuoteStatus,
   updateQuote,
   type QuoteInput,
@@ -65,6 +66,15 @@ describe("orçamentos", () => {
     expect(createQuote(db, quoteInput()).number).toBe(1);
     expect(createQuote(db, quoteInput()).number).toBe(2);
     expect(createQuote(db, quoteInput()).number).toBe(3);
+  });
+
+  test("espiar o próximo número não consome o contador", () => {
+    expect(peekNextQuoteNumber(db)).toBe(1);
+    expect(peekNextQuoteNumber(db)).toBe(1);
+
+    createQuote(db, quoteInput());
+
+    expect(peekNextQuoteNumber(db)).toBe(2);
   });
 
   test("cria o cliente junto quando ele ainda não existe", () => {

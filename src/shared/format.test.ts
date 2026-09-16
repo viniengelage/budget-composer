@@ -9,7 +9,9 @@ import {
   formatLongDate,
   formatPhone,
   formatQuantity,
+  maskCnpj,
   parseCurrency,
+  parseQuantity,
 } from "@shared/format";
 
 describe("formatCurrency", () => {
@@ -112,5 +114,43 @@ describe("datas", () => {
 
   test("soma dias em ano bissexto", () => {
     expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+  });
+});
+
+describe("máscara de CNPJ", () => {
+  test("monta a máscara conforme a pessoa digita", () => {
+    expect(maskCnpj("")).toBe("");
+    expect(maskCnpj("12")).toBe("12");
+    expect(maskCnpj("12345")).toBe("12.345");
+    expect(maskCnpj("12345678")).toBe("12.345.678");
+    expect(maskCnpj("123456780001")).toBe("12.345.678/0001");
+    expect(maskCnpj("12345678000190")).toBe("12.345.678/0001-90");
+  });
+
+  test("ignora o que não é dígito e corta o excesso", () => {
+    expect(maskCnpj("12.345.678/0001-90")).toBe("12.345.678/0001-90");
+    expect(maskCnpj("12345678000190999")).toBe("12.345.678/0001-90");
+  });
+});
+
+describe("quantidade", () => {
+  test("aceita inteiro, vírgula e ponto", () => {
+    expect(parseQuantity("250")).toBe(250);
+    expect(parseQuantity("12,5")).toBe(12.5);
+    expect(parseQuantity("12.5")).toBe(12.5);
+  });
+
+  test("campo vazio ou lixo vira zero, não NaN", () => {
+    expect(parseQuantity("")).toBe(0);
+    expect(parseQuantity("abc")).toBe(0);
+  });
+
+  test("não aceita quantidade negativa", () => {
+    expect(parseQuantity("-5")).toBe(5);
+  });
+
+  test("volta a virar texto do mesmo jeito", () => {
+    expect(formatQuantity(parseQuantity("12,5"))).toBe("12,5");
+    expect(formatQuantity(parseQuantity("250"))).toBe("250");
   });
 });

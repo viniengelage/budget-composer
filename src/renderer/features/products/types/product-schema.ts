@@ -27,12 +27,3 @@ export const productFormSchema = z.object({
 });
 
 export type ProductFormValues = z.output<typeof productFormSchema>;
-
-export const UNIT_OPTIONS = [
-  { value: "m2", label: "m² — metro quadrado" },
-  { value: "m", label: "m — metro" },
-  { value: "un", label: "un — unidade" },
-  { value: "saco", label: "saco" },
-  { value: "servico", label: "serviço" },
-  { value: "hora", label: "h — hora" },
-] as const;

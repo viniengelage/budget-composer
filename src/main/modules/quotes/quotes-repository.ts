@@ -174,6 +174,18 @@ export function getQuote(db: Db, id: string): Quote | null {
   };
 }
 
+/**
+ * Só espia: não consome o contador. Serve para a tela mostrar "Nº 254"
+ * enquanto a pessoa preenche. O número de verdade é atribuído no save, dentro
+ * da transação — se dois orçamentos forem criados, nenhum repete.
+ */
+export function peekNextQuoteNumber(db: Db): number {
+  const row = db.get<{ value: number }>(
+    "SELECT value FROM counters WHERE name = 'quote_number'",
+  );
+  return (row?.value ?? 0) + 1;
+}
+
 function nextQuoteNumber(db: Db): number {
   db.run("UPDATE counters SET value = value + 1 WHERE name = 'quote_number'");
   const row = db.get<{ value: number }>(

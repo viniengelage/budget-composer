@@ -73,6 +73,7 @@ export type AppRequests = {
     response: Result<Customer>;
   };
 
+  nextQuoteNumber: { params: Record<string, never>; response: Result<number> };
   listQuotes: { params: { search: string }; response: Result<QuoteSummary[]> };
   getQuote: { params: { id: string }; response: Result<Quote | null> };
   createQuote: { params: { input: QuoteInput }; response: Result<Quote> };

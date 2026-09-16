@@ -10,6 +10,13 @@ export const quoteKeys = {
   detail: (id: string) => ["quotes", "detail", id] as const,
 };
 
+export function useNextQuoteNumber() {
+  return useQuery({
+    queryKey: [...quoteKeys.all, "next-number"],
+    queryFn: () => call("nextQuoteNumber", {}),
+  });
+}
+
 export function useQuotes(search = "") {
   return useQuery({
     queryKey: quoteKeys.list(search),

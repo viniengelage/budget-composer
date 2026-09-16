@@ -66,6 +66,17 @@ export function parseCurrency(input: string): Cents {
   );
 }
 
+/**
+ * Aceita "250", "12,5" e "12.5". Quantidade pode ser fracionada (meio metro
+ * de grama existe), mas nunca negativa.
+ */
+export function parseQuantity(input: string): number {
+  const cleaned = input.replace(/[^\d,.]/g, "").replace(",", ".");
+  const parsed = Number.parseFloat(cleaned);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return Math.round(parsed * 1000) / 1000;
+}
+
 export function formatQuantity(quantity: number): string {
   if (Number.isInteger(quantity)) return String(quantity);
   return String(Number(quantity.toFixed(3))).replace(".", ",");
@@ -94,6 +105,33 @@ export function formatDocument(value: string): string {
     return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
   }
   return value;
+}
+
+/**
+ * Máscara progressiva: vai montando 00.000.000/0000-00 conforme a pessoa
+ * digita, em vez de só formatar quando os 14 dígitos estiverem completos.
+ */
+export function maskCnpj(value: string): string {
+  const digits = onlyDigits(value).slice(0, 14);
+  if (digits.length === 0) return "";
+
+  const parts = [
+    digits.slice(0, 2),
+    digits.slice(2, 5),
+    digits.slice(5, 8),
+    digits.slice(8, 12),
+    digits.slice(12, 14),
+  ];
+  const separators = [".", ".", "/", "-"];
+
+  let masked = parts[0] ?? "";
+  for (let index = 1; index < parts.length; index += 1) {
+    const part = parts[index];
+    if (part === undefined || part === "") break;
+    masked += separators[index - 1] + part;
+  }
+
+  return masked;
 }
 
 export function formatPhone(value: string): string {
