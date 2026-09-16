@@ -7,43 +7,43 @@ const reactHooks = require("eslint-plugin-react-hooks");
 const prettier = require("eslint-config-prettier");
 
 /**
- * Bulletproof React — regras de fronteira (unidirectional codebase).
+ * Duas fronteiras são aplicadas aqui.
  *
- *   shared (components, hooks, lib, utils, types, config, styles)
- *     └──> não pode importar de features nem de app
- *   features
- *     └──> não pode importar de app, nem de OUTRA feature
- *   app
- *     └──> pode importar de tudo
+ * 1. Processos (Electrobun):
+ *      main <──X──> renderer      só conversam por RPC
+ *      shared não conhece nenhum dos dois
+ *
+ * 2. Bulletproof React, dentro de src/renderer:
+ *      shared (components, hooks, lib, utils, config, styles, stores)
+ *        └──> não pode importar de features nem de app
+ *      features
+ *        └──> não pode importar de app, nem de OUTRA feature
+ *      app
+ *        └──> pode importar de tudo
  *
  * Referência: https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md
  */
-const SHARED_DIRS = [
-  "./src/components",
-  "./src/hooks",
-  "./src/lib",
-  "./src/utils",
-  "./src/types",
-  "./src/config",
-  "./src/styles",
-  "./src/stores",
+const RENDERER_SHARED_DIRS = [
+  "./src/renderer/components",
+  "./src/renderer/hooks",
+  "./src/renderer/lib",
+  "./src/renderer/utils",
+  "./src/renderer/config",
+  "./src/renderer/styles",
+  "./src/renderer/stores",
 ];
+
+const RENDERER_FEATURES = ["quotes", "products", "customers", "company"];
 
 module.exports = tseslint.config(
   {
     ignores: [
       "node_modules/**",
-      "ios/**",
-      "android/**",
-      "macos/**",
-      "windows/**",
+      ".hutch/**",
       "dist/**",
       "build/**",
-      ".expo/**",
-      // configs CommonJS de ferramentas (metro, babel, jest, eslint, autolink)
+      "artifacts/**",
       "*.js",
-      "modules/**/*.js",
-      // skills de agente que vêm com o projeto — não é código nosso
       ".agents/**",
       "reference/**",
     ],
@@ -57,16 +57,20 @@ module.exports = tseslint.config(
         ecmaFeatures: { jsx: true },
       },
       globals: {
-        __DEV__: "readonly",
         console: "readonly",
         fetch: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
         AbortController: "readonly",
+        crypto: "readonly",
+        process: "readonly",
       },
     },
     settings: {
       react: { version: "detect" },
+      // O SDK do Electrobun vem do devkit projetado pelo Hutch, não do
+      // node_modules: sem isto o plugin import não sabe classificá-lo.
+      "import/core-modules": ["electrobun", "electrobun/main", "electrobun/view"],
       "import/resolver": {
         typescript: { project: "./tsconfig.json" },
         node: { extensions: [".ts", ".tsx", ".js", ".jsx"] },
@@ -96,31 +100,21 @@ module.exports = tseslint.config(
         "error",
         {
           zones: [
-            // features não conversam entre si
+            { target: "./src/main", from: "./src/renderer" },
+            { target: "./src/renderer", from: "./src/main" },
+            { target: "./src/shared", from: ["./src/main", "./src/renderer"] },
+
+            ...RENDERER_FEATURES.map((feature) => ({
+              target: `./src/renderer/features/${feature}`,
+              from: "./src/renderer/features",
+              except: [`./${feature}`],
+            })),
+
+            { target: "./src/renderer/features", from: "./src/renderer/app" },
             {
-              target: "./src/features/quotes",
-              from: "./src/features",
-              except: ["./quotes"],
+              target: RENDERER_SHARED_DIRS,
+              from: ["./src/renderer/features", "./src/renderer/app"],
             },
-            {
-              target: "./src/features/products",
-              from: "./src/features",
-              except: ["./products"],
-            },
-            {
-              target: "./src/features/customers",
-              from: "./src/features",
-              except: ["./customers"],
-            },
-            {
-              target: "./src/features/company",
-              from: "./src/features",
-              except: ["./company"],
-            },
-            // features não importam da camada de aplicação
-            { target: "./src/features", from: "./src/app" },
-            // camada compartilhada não conhece features nem app
-            { target: SHARED_DIRS, from: ["./src/features", "./src/app"] },
           ],
         },
       ],
@@ -140,7 +134,7 @@ module.exports = tseslint.config(
             {
               group: ["../*"],
               message:
-                "Import relativo para fora da pasta não é permitido. Use o alias '@/'.",
+                "Import relativo para fora da pasta não é permitido. Use o alias '@/' ou '@shared/'.",
             },
           ],
         },
@@ -148,9 +142,8 @@ module.exports = tseslint.config(
     },
   },
   {
-    // default export exigido por contrato de framework:
-    // Expo (App/index) e codegen do React Native (specs Native*.ts)
-    files: ["App.tsx", "index.ts", "scripts/**/*.ts", "modules/**/Native*.ts"],
+    // default export exigido por contrato de ferramenta
+    files: ["vite.config.ts", "electrobun.config.ts", "hutch.config.ts"],
     rules: { "import/no-default-export": "off" },
   },
   prettier,

@@ -1,178 +1,114 @@
-#!/usr/bin/env bun
-import { existsSync } from "node:fs";
+/**
+ * O Hutch compila sempre para o sistema onde ele está rodando — não existe
+ * cross-compile. Este script existe para (1) falhar cedo e com instrução clara
+ * quando o alvo pedido não é a máquina atual e (2) dizer onde o instalável
+ * ficou, em vez de deixar a pessoa caçar na pasta artifacts/.
+ *
+ * Uso:
+ *   bun run scripts/build.ts                      # host, canal stable
+ *   bun run scripts/build.ts --target windows     # exige rodar no Windows
+ *   bun run scripts/build.ts --env canary
+ */
+import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { parseArgs } from "node:util";
 
-import { patchMacosPods } from "./patch-macos-pods";
+type Target = "macos" | "windows" | "linux";
+type Env = "stable" | "canary";
 
-const ROOT = join(import.meta.dir, "..");
-// Invocado por caminho, sob bun, e nunca via `bunx`.
-//
-// No macOS o `bunx` roda o CLI sob bun; no Windows o shim .cmd honra o
-// shebang `#!/usr/bin/env node` e roda sob node — cujo loader ESM não
-// enxerga os named exports de @expo/config-plugins, que é CJS. Chamar o
-// arquivo direto com bun deixa o runtime igual nas duas plataformas.
-//
-// `--platform` também importa: sem ele o prebuild processa os mods da
-// Apple, e o parser de pbxproj quebra sob bun.
-const EXPO_DESKTOP_CLI = "node_modules/expo-desktop/build/cli.js";
-const MACOS_WORKSPACE = "macos/BudgetComposer.xcworkspace";
-const MACOS_SCHEME = "BudgetComposer-macOS";
-const WINDOWS_SOLUTION = "windows/MyApp.sln";
+const TARGET_BY_PLATFORM: Record<string, Target> = {
+  darwin: "macos",
+  win32: "windows",
+  linux: "linux",
+};
 
-type Platform = "macos" | "windows";
+const ARTIFACT_PREFIX: Record<Target, string> = {
+  macos: "macos-arm64-",
+  windows: "win-x64-",
+  linux: "linux-x64-",
+};
 
-function fail(message: string): never {
-  console.error(`\n✖ ${message}\n`);
+const HOW_TO_BUILD: Record<Target, string> = {
+  macos: "um Mac com Xcode Command Line Tools",
+  windows: "um Windows 11 com Visual Studio Build Tools (C++) e cmake",
+  linux: "um Linux com build-essential, cmake, GTK 3 e WebKitGTK 4.1",
+};
+
+function argValue(flag: string): string | null {
+  const index = Bun.argv.indexOf(flag);
+  if (index === -1) return null;
+  return Bun.argv[index + 1] ?? null;
+}
+
+function parseTarget(): Target {
+  const requested = argValue("--target");
+  if (requested === null) return hostTarget();
+
+  if (requested !== "macos" && requested !== "windows" && requested !== "linux") {
+    throw new Error(`Alvo desconhecido: ${requested}. Use macos, windows ou linux.`);
+  }
+  return requested;
+}
+
+function hostTarget(): Target {
+  const target = TARGET_BY_PLATFORM[process.platform];
+  if (!target) throw new Error(`Sistema não suportado: ${process.platform}`);
+  return target;
+}
+
+function parseEnv(): Env {
+  const requested = argValue("--env") ?? "stable";
+  if (requested !== "stable" && requested !== "canary") {
+    throw new Error(`Canal desconhecido: ${requested}. Use stable ou canary.`);
+  }
+  return requested;
+}
+
+async function run(command: string[]): Promise<void> {
+  console.log(`\n> ${command.join(" ")}`);
+  const proc = Bun.spawn(command, { stdout: "inherit", stderr: "inherit" });
+  const code = await proc.exited;
+  if (code !== 0) throw new Error(`Falhou (código ${code}): ${command.join(" ")}`);
+}
+
+async function listArtifacts(target: Target): Promise<string[]> {
+  try {
+    const files = await readdir(join(process.cwd(), "artifacts"));
+    return files.filter((file) => file.includes(ARTIFACT_PREFIX[target]));
+  } catch {
+    return [];
+  }
+}
+
+const target = parseTarget();
+const env = parseEnv();
+const host = hostTarget();
+
+if (target !== host) {
+  console.error(
+    [
+      `Não dá para gerar a build de ${target} a partir de ${host}.`,
+      "",
+      "O Electrobun empacota binários nativos do sistema onde o build roda;",
+      "não existe cross-compile. Para esse alvo você precisa de",
+      `${HOW_TO_BUILD[target]}.`,
+      "",
+      "Na prática: use o workflow .github/workflows/build.yml, que roda cada",
+      "alvo no runner nativo e publica o instalador como artefato.",
+    ].join("\n"),
+  );
   process.exit(1);
 }
 
-function step(message: string): void {
-  console.log(`\n▸ ${message}`);
+await run(["hutch", "electrobun", "prepare"]);
+await run(["bunx", "vite", "build"]);
+await run(["hutch", "electrobun", "build", `--env=${env}`]);
+
+const artifacts = await listArtifacts(target);
+
+console.log(`\nBuild de ${target} (${env}) pronta.`);
+if (artifacts.length === 0) {
+  console.log("Nenhum artefato encontrado em artifacts/ — confira o log acima.");
+} else {
+  console.log("Instalador e metadados em artifacts/:");
+  for (const file of artifacts) console.log(`  ${file}`);
 }
-
-async function run(command: string[], label: string): Promise<void> {
-  step(label);
-  console.log(`  $ ${command.join(" ")}`);
-
-  const proc = Bun.spawn(command, { cwd: ROOT, stdout: "inherit", stderr: "inherit" });
-  const exitCode = await proc.exited;
-
-  if (exitCode !== 0) fail(`"${label}" falhou com código ${exitCode}.`);
-}
-
-async function ensureNativeProject(platform: Platform): Promise<void> {
-  const marker = platform === "macos" ? MACOS_WORKSPACE : WINDOWS_SOLUTION;
-  if (existsSync(join(ROOT, marker))) return;
-
-  await run(
-    [
-      "bun",
-      EXPO_DESKTOP_CLI,
-      "prebuild",
-      "--platform",
-      platform,
-      "--template",
-      "expo-desktop-template-bare-minimum@beta",
-    ],
-    `Gerando projeto nativo (${marker} não existe)`,
-  );
-
-  if (!existsSync(join(ROOT, marker))) {
-    fail(`O prebuild rodou mas ${marker} continua ausente.`);
-  }
-}
-
-async function buildMacos(): Promise<void> {
-  if (process.platform !== "darwin") {
-    fail("Build de macOS exige macOS com Xcode. Rode em um runner macos-latest.");
-  }
-
-  await ensureNativeProject("macos");
-
-  step("Alinhando deployment target dos pods");
-  const patch = await patchMacosPods();
-  console.log(`  Podfile: ${patch}`);
-  if (patch === "patched") {
-    await run(["pod", "install", "--project-directory=macos"], "Reinstalando pods");
-  }
-
-  await run(
-    [
-      "xcodebuild",
-      "-workspace",
-      MACOS_WORKSPACE,
-      "-scheme",
-      MACOS_SCHEME,
-      "-configuration",
-      "Release",
-      "-derivedDataPath",
-      "build/macos",
-      "CODE_SIGNING_ALLOWED=NO",
-      "build",
-    ],
-    "Compilando o app macOS (Release)",
-  );
-
-  console.log("\n✓ macOS pronto: build/macos/Build/Products/Release/BudgetComposer.app");
-  console.log("  Binário universal (arm64 + x86_64), sem assinatura.");
-  console.log(
-    "  Para distribuir fora da sua máquina, assine com Developer ID e envie para notarização.",
-  );
-}
-
-async function buildWindows(): Promise<void> {
-  if (process.platform !== "win32") {
-    fail(
-      "Build de Windows exige Windows com Visual Studio (workload Desktop C++).\n" +
-        "  Rode em um runner windows-latest — veja .github/workflows/build.yml.",
-    );
-  }
-
-  await ensureNativeProject("windows");
-
-  // Não existe comando `build-windows`. O RNW registra run-windows,
-  // autolink-windows, codegen-windows, init-windows, config e health-check.
-  // `--no-launch --no-deploy --no-packager` transforma o run em build puro,
-  // que é o que um runner de CI precisa.
-  // O RNW 0.81 pede o SDK 10.0.22621.0 por padrão, mas o runner só traz o
-  // 10.0.26100.0 (medido no passo de diagnóstico do workflow). Sem este
-  // override, MSB8036 derruba expo-desktop-modules-core, expo-desktop-stubs
-  // e o nosso rnw-sqlite — nenhum deles compila no ambiente padrão.
-  const sdkVersion = process.env.WINDOWS_SDK_VERSION ?? "10.0.26100.0";
-
-  // O projeto Windows do @react-native-async-storage falha a verificacao de
-  // dependencias transitivas do Windows App SDK 1.8. A propria mensagem de
-  // erro aponta este flag como saida. E limitacao do modulo, nao nossa.
-  const msbuildProps = [
-    `WindowsTargetPlatformVersion=${sdkVersion}`,
-    "WindowsAppSDKVerifyTransitiveDependencies=false",
-    // O CLI faz `msbuildprops.split(",")` — ponto e vírgula não separa e
-    // faz o valor inteiro virar uma única propriedade inválida.
-  ].join(",");
-
-  await run(
-    [
-      "bunx",
-      "react-native",
-      "run-windows",
-      "--release",
-      "--arch",
-      "x64",
-      "--no-launch",
-      "--no-deploy",
-      "--no-packager",
-      "--logging",
-      "--msbuildprops",
-      msbuildProps,
-    ],
-    `Compilando o app Windows (Release x64, SDK ${sdkVersion})`,
-  );
-
-  console.log("\n✓ Windows pronto: windows/x64/Release/");
-  console.log("  O pacote MSIX fica em windows/MyApp.Package/AppPackages/.");
-}
-
-async function main(): Promise<void> {
-  const { values } = parseArgs({
-    args: Bun.argv.slice(2),
-    options: { platform: { type: "string" } },
-    allowPositionals: false,
-  });
-
-  const requested = values.platform as Platform | undefined;
-
-  if (requested !== undefined && requested !== "macos" && requested !== "windows") {
-    fail(`Plataforma inválida: "${requested}". Use "macos" ou "windows".`);
-  }
-
-  const platform: Platform =
-    requested ?? (process.platform === "win32" ? "windows" : "macos");
-
-  console.log(`\n🏗  Build de release — ${platform}`);
-
-  if (platform === "macos") await buildMacos();
-  else await buildWindows();
-}
-
-await main();

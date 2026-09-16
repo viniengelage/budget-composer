@@ -1,7 +1,7 @@
 name: Build desktop
 
-# Cada alvo roda no SO nativo: não existe cross-compile para
-# react-native-macos (Xcode) nem react-native-windows (MSBuild).
+# O Hutch empacota para o sistema onde ele roda — não existe cross-compile.
+# Cada instalador sai do seu runner nativo.
 on:
   push:
     branches: [main]
@@ -18,13 +18,23 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Instalar Hutch
+        run: |
+          curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | sh
+          echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
+
       - run: bun install --frozen-lockfile
+
+      # O tsconfig aponta para .hutch/devkit; sem preparar, o typecheck não
+      # encontra os tipos do SDK do Electrobun.
+      - run: hutch electrobun prepare
+
       - run: bun run typecheck
       - run: bun run lint
       - run: bun test
 
   macos:
-    name: Build macOS
+    name: Instalador macOS
     needs: check
     runs-on: macos-latest
     steps:
@@ -33,21 +43,22 @@ jobs:
         with:
           bun-version: latest
 
-      # Sem cache de macos/Pods: `macos/` inteiro é gerado pelo prebuild (CNG).
-      # Restaurar só a subpasta Pods faz o prebuild encontrar o diretório
-      # existente, "reusar" um projeto pela metade e falhar com
-      # "Failed to locate the macos/*.xcodeproj".
+      - name: Instalar Hutch
+        run: |
+          curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | sh
+          echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
+
       - run: bun install --frozen-lockfile
-      - run: bun run build:macos
+      - run: bun run build
 
       - uses: actions/upload-artifact@v4
         with:
           name: orcamentos-grameira-macos
-          path: build/macos/Build/Products/Release/*.app
+          path: artifacts/macos-arm64-*
           if-no-files-found: error
 
   windows:
-    name: Build Windows
+    name: Instalador Windows (.exe)
     needs: check
     runs-on: windows-latest
     steps:
@@ -56,31 +67,19 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Configurar MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      # O RNW 0.81 pede o SDK 10.0.22621.0, que o runner com Visual Studio 18
-      # não tem. Antes de fixar uma versão no chute, medir o que existe.
-      - name: Diagnóstico do ambiente
+      - name: Instalar Hutch
         shell: pwsh
         run: |
-          Write-Host "== Windows SDKs instalados =="
-          Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\Include' -ErrorAction SilentlyContinue |
-            Select-Object -ExpandProperty Name
-          Write-Host "== Toolsets do MSVC =="
-          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          Write-Host "VS: $vs"
-          Get-ChildItem "$vs\VC\Tools\MSVC" -ErrorAction SilentlyContinue |
-            Select-Object -ExpandProperty Name
+          & ([scriptblock]::Create((irm https://hutch.blackboard.sh/hutch/install.ps1)))
+          "$env:USERPROFILE\.hutch\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - run: bun install --frozen-lockfile
-      - run: bun run build:windows
+      - run: bun run build
 
+      # win-x64-OrcamentosGrameira-Setup.zip traz o instalador .exe visível e o
+      # payload oculto ao lado; os dois precisam viajar juntos.
       - uses: actions/upload-artifact@v4
         with:
           name: orcamentos-grameira-windows
-          path: windows/**/AppPackages/**
-          # "warn": o objetivo primário deste job é COMPILAR. O empacotamento
-          # MSIX depende de configuração de assinatura que ainda não fizemos,
-          # e falhar por falta de artefato esconderia o sinal que interessa.
-          if-no-files-found: warn
+          path: artifacts/win-x64-*
+          if-no-files-found: error

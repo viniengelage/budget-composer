@@ -7,8 +7,8 @@ Instruções para agentes de IA trabalhando neste repositório. Leia antes de ed
 O app será usado por **uma pessoa com familiaridade básica com computador**.
 Toda decisão de interface se subordina a isso:
 
-- Corpo de texto 17px (um degrau acima do padrão web), mínimo absoluto 13px
-- Alvo clicável ≥ 44px; ações primárias com 56px
+- Corpo de texto 17px (`text-base`), mínimo absoluto 13px (`text-xs`)
+- Alvo clicável ≥ 44px (`h-11`); ações primárias com 56px (`h-14`)
 - Rótulo sempre visível — placeholder nunca substitui rótulo
 - Nenhum botão só com ícone; ícone é reforço do texto
 - Mensagem de erro sempre oferece saída ("Pode preencher à mão")
@@ -17,25 +17,56 @@ Toda decisão de interface se subordina a isso:
 Se uma mudança deixa a tela mais densa ou mais "profissional" às custas da
 clareza, ela está errada para este produto.
 
+## Stack
+
+App desktop em **Electrobun 2** (webview do sistema + processo principal em
+TypeScript), construído pelo **Hutch**. Interface em React 19 + Tailwind v4,
+empacotada pelo Vite. Banco local em `bun:sqlite`.
+
+Electrobun **não é Electron**: não existe `ipcMain`, `BrowserWindow` do Electron,
+`contextBridge` nem `app.whenReady()`. A API é outra
+(`electrobun/main`, `electrobun/view`).
+
 ## Comandos
 
 ```bash
 bun install
-bun run check        # typecheck + lint + testes — rode antes de entregar
+bun run devkit       # hutch electrobun prepare — gera .hutch/devkit (tipos do SDK)
+bun run check        # devkit + typecheck + lint + testes — rode antes de entregar
+bun run dev          # build do Vite + abre a janela, com watch
+bun run dev:hmr      # Vite dev server + janela, com hot reload da UI
 bun run typecheck    # tsgo (TypeScript 7)
-bun run lint
 bun test
-bun run build:macos  # exige macOS + Xcode
+bun run build        # instalador do sistema atual
+bun run build:windows # exige rodar no Windows
 ```
 
-Use **bun**, nunca npm/yarn/pnpm.
+Use **bun**, nunca npm/yarn/pnpm. O `hutch.config.ts` declara
+`packageManager: "bun"`, então `hutch install` também delega para o bun.
+
+`bun run devkit` precisa rodar ao menos uma vez depois de clonar: o `tsconfig.json`
+aponta os tipos de `electrobun` para `.hutch/devkit`, que é gerado e não versionado.
 
 ## Regras de código
 
-### Fronteiras de arquitetura
-Aplicadas por ESLint (`import/no-restricted-paths`), não por convenção:
+### Fronteira entre processos
+Aplicada por ESLint (`import/no-restricted-paths`), não por convenção:
 
-- `components/`, `hooks/`, `lib/`, `utils/`, `types/`, `config/`, `styles/`, `stores/`
+```
+src/main/      processo principal — SQLite, rede, sistema de arquivos
+src/renderer/  React na webview — nunca toca em banco nem em disco
+src/shared/    tipos e regra de domínio pura, importável pelos dois
+```
+
+- `main` e `renderer` **não podem** se importar. Conversam só por RPC.
+- `shared` **não pode** importar nenhum dos dois.
+
+Se um dado precisa atravessar, ele entra no contrato em
+`src/shared/rpc-contract.ts` e ganha um handler em `src/main/rpc/handlers.ts`.
+
+### Fronteiras dentro de `src/renderer` (Bulletproof React)
+
+- `components/`, `hooks/`, `lib/`, `utils/`, `config/`, `styles/`, `stores/`
   → **não podem** importar de `features/` nem de `app/`
 - `features/X` → **não pode** importar de `app/` nem de `features/Y`
 - `app/` → pode importar de tudo
@@ -43,7 +74,16 @@ Aplicadas por ESLint (`import/no-restricted-paths`), não por convenção:
 Se precisar cruzar uma fronteira, o código está na camada errada. Mova-o.
 
 ### Imports
-Sempre `@/` absoluto. `../` para fora da pasta é erro de lint.
+Sempre alias absoluto: `@/` (renderer), `@main/`, `@shared/`.
+`../` para fora da pasta é erro de lint.
+
+### RPC
+Todo handler devolve `Result<T>` (`@shared/result`), nunca lança exceção para o
+outro lado — exceção atravessando o RPC vira timeout genérico e a pessoa perde a
+frase em português. Use `attempt` / `attemptAsync`.
+
+No renderer, use `call()` de `@/lib/rpc/client`: ele desembrulha o `Result` e
+lança `AppError` com a mensagem pronta para a tela.
 
 ### Dinheiro
 Sempre `Cents` (inteiro). Nunca float, nunca `parseFloat` em valor monetário.
@@ -56,34 +96,44 @@ para formatar: parseia como UTC e devolve o dia anterior em UTC-3.
 
 ### Estilo
 Nenhum literal de cor, espaçamento, raio ou tamanho de fonte em componente.
-Tudo vem de `@/styles/tokens`. Falta um valor? Adicione um token, não um literal.
-Os tokens espelham o Penpot (`orcamentos-core`, `orcamentos-semantic`) — mudou
-um, mude o outro.
+Tudo vem do `@theme` em `src/renderer/styles/theme.css`. Falta um valor?
+Adicione um token lá, não um literal na classe. O `@theme` espelha o Penpot
+(`orcamentos-core`, `orcamentos-semantic`) — mudou um, mude o outro.
 
 ### Bibliotecas externas
-Não importe lib de terceiro direto numa feature. Envolva em `src/lib/`.
-`@react-native-async-storage/async-storage` só aparece em `src/lib/storage/`.
+Não importe lib de terceiro direto numa feature. Envolva em `src/renderer/lib/`
+(ou `src/main/services/`). O SDK do Electrobun só aparece em
+`src/renderer/lib/rpc/` e em `src/main/`.
+
+### Banco
+Acesso a SQLite só via a interface `Db` de `@main/db/database`. Repositórios
+ficam em `src/main/modules/<dominio>/`. Migração nova = mais um array em
+`MIGRATIONS`; nunca edite uma migração já publicada.
 
 ### Testes
 `bun test`, arquivos `*.test.ts` ao lado do código. Cubra **lógica de domínio**
-(dinheiro, datas, cálculo de orçamento) — é onde bug custa caro. Teste de
-componente ainda não está configurado (precisaria de jest + RNTL).
+(dinheiro, datas, cálculo de orçamento) e **repositórios** (rodam contra
+`:memory:` de verdade, com o mesmo SQL de produção). Teste de componente ainda
+não está configurado.
 
 ## Plataforma
 
-Alvos: `react-native-windows` e `react-native-macos` (plataformas out-of-tree).
-Antes de adicionar qualquer dependência com código nativo, **verifique suporte
-nas duas** — a maioria dos pacotes RN suporta só iOS/Android. Verificação real:
-instale, rode `bun run prebuild` e confirme que o pod aparece em
-`macos/Podfile.lock`.
+Alvos: **Windows 11 x64** (WebView2) e **macOS ARM64** (WKWebView).
 
-Não use `expo-router` nem `react-navigation`: a navegação é uma máquina de
-estados tipada em `src/config/routes.ts` + `src/stores/navigation-store.ts`,
-justamente para não depender de módulos nativos sem suporte desktop garantido.
+O Hutch compila **só para o sistema onde ele roda** — não existe cross-compile.
+Instalador de Windows sai de um runner Windows; de macOS, de um Mac. É o que o
+`.github/workflows/build.yml` faz.
+
+Os dois usam o webview do sistema, que são motores diferentes. Qualquer coisa
+sensível a engine (layout, `<input type="date">`, impressão, fonte) precisa ser
+conferida nos dois antes de considerar pronta.
 
 ## O que não fazer
 
-- Não rode `pod install` direto em `macos/` e edite o Podfile: a pasta é
-  regenerada pelo prebuild. Ajustes vão em `scripts/patch-macos-pods.ts`.
-- Não versione `ios/`, `android/`, `macos/`, `windows/` — são gerados (CNG).
+- Não versione `.hutch/`, `dist/`, `build/` nem `artifacts/` — são gerados.
+- Não use API de Electron: não existe aqui.
+- Não coloque acesso a banco, `node:fs` ou `fetch` de API externa no renderer —
+  vai para `src/main` e atravessa por RPC.
 - Não suprima erro de lint com `eslint-disable` sem explicar o porquê no código.
+- Não mexa no pin de versão em `hutch.config.ts` sem rodar `bun run check` e uma
+  build completa: o Hutch, o Cottontail e o Electrobun andam em trio.

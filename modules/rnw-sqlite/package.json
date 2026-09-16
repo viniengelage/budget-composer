@@ -1,7 +1,0 @@
-{
-  "name": "rnw-sqlite",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Módulo nativo de SQLite para React Native Windows (nova arquitetura)",
-  "main": "src/NativeRnwSqlite.ts"
-}
