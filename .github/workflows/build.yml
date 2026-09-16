@@ -33,12 +33,10 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Cache dos Pods
-        uses: actions/cache@v4
-        with:
-          path: macos/Pods
-          key: pods-${{ hashFiles('macos/Podfile.lock') }}
-
+      # Sem cache de macos/Pods: `macos/` inteiro é gerado pelo prebuild (CNG).
+      # Restaurar só a subpasta Pods faz o prebuild encontrar o diretório
+      # existente, "reusar" um projeto pela metade e falhar com
+      # "Failed to locate the macos/*.xcodeproj".
       - run: bun install --frozen-lockfile
       - run: bun run build:macos
 
