@@ -110,8 +110,24 @@ async function buildWindows(): Promise<void> {
   }
 
   await ensureNativeProject("windows");
+
+  // Não existe comando `build-windows`. O RNW registra run-windows,
+  // autolink-windows, codegen-windows, init-windows, config e health-check.
+  // `--no-launch --no-deploy --no-packager` transforma o run em build puro,
+  // que é o que um runner de CI precisa.
   await run(
-    ["bunx", "react-native", "build-windows", "--release", "--arch", "x64", "--logging"],
+    [
+      "bunx",
+      "react-native",
+      "run-windows",
+      "--release",
+      "--arch",
+      "x64",
+      "--no-launch",
+      "--no-deploy",
+      "--no-packager",
+      "--logging",
+    ],
     "Compilando o app Windows (Release x64)",
   );
 
