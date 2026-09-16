@@ -2,6 +2,7 @@ import { PlaceholderRoute } from "@/app/routes/placeholder-route";
 import { ProductsRoute } from "@/app/routes/products-route";
 import { QuoteCreateRoute } from "@/app/routes/quote-create-route";
 import { QuotesRoute } from "@/app/routes/quotes-route";
+import { SettingsRoute } from "@/app/routes/settings-route";
 import { ROUTES, type RouteName } from "@/config/routes";
 
 export function Router({ route }: { route: RouteName }) {
@@ -26,14 +27,7 @@ export function Router({ route }: { route: RouteName }) {
       );
 
     case ROUTES.settings:
-      return (
-        <PlaceholderRoute
-          title="Configurações"
-          subtitle="Os dados da sua empresa que saem impressos no orçamento"
-          icon="gear"
-          description="Aqui vão entrar o nome, o telefone, o endereço, a chave Pix e a logo que aparecem no papel entregue ao cliente."
-        />
-      );
+      return <SettingsRoute />;
 
     default:
       return <QuotesRoute />;
