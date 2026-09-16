@@ -127,7 +127,9 @@ async function buildWindows(): Promise<void> {
   const msbuildProps = [
     `WindowsTargetPlatformVersion=${sdkVersion}`,
     "WindowsAppSDKVerifyTransitiveDependencies=false",
-  ].join(";");
+    // O CLI faz `msbuildprops.split(",")` — ponto e vírgula não separa e
+    // faz o valor inteiro virar uma única propriedade inválida.
+  ].join(",");
 
   await run(
     [
