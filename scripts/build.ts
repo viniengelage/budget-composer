@@ -115,6 +115,12 @@ async function buildWindows(): Promise<void> {
   // autolink-windows, codegen-windows, init-windows, config e health-check.
   // `--no-launch --no-deploy --no-packager` transforma o run em build puro,
   // que é o que um runner de CI precisa.
+  // O RNW 0.81 pede o SDK 10.0.22621.0 por padrão, mas o runner só traz o
+  // 10.0.26100.0 (medido no passo de diagnóstico do workflow). Sem este
+  // override, MSB8036 derruba expo-desktop-modules-core, expo-desktop-stubs
+  // e o nosso rnw-sqlite — nenhum deles compila no ambiente padrão.
+  const sdkVersion = process.env.WINDOWS_SDK_VERSION ?? "10.0.26100.0";
+
   await run(
     [
       "bunx",
@@ -127,8 +133,10 @@ async function buildWindows(): Promise<void> {
       "--no-deploy",
       "--no-packager",
       "--logging",
+      "--msbuildprops",
+      `WindowsTargetPlatformVersion=${sdkVersion}`,
     ],
-    "Compilando o app Windows (Release x64)",
+    `Compilando o app Windows (Release x64, SDK ${sdkVersion})`,
   );
 
   console.log("\n✓ Windows pronto: windows/x64/Release/");
