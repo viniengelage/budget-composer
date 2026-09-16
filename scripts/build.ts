@@ -6,6 +6,16 @@ import { parseArgs } from "node:util";
 import { patchMacosPods } from "./patch-macos-pods";
 
 const ROOT = join(import.meta.dir, "..");
+// Invocado por caminho, sob bun, e nunca via `bunx`.
+//
+// No macOS o `bunx` roda o CLI sob bun; no Windows o shim .cmd honra o
+// shebang `#!/usr/bin/env node` e roda sob node — cujo loader ESM não
+// enxerga os named exports de @expo/config-plugins, que é CJS. Chamar o
+// arquivo direto com bun deixa o runtime igual nas duas plataformas.
+//
+// `--platform` também importa: sem ele o prebuild processa os mods da
+// Apple, e o parser de pbxproj quebra sob bun.
+const EXPO_DESKTOP_CLI = "node_modules/expo-desktop/build/cli.js";
 const MACOS_WORKSPACE = "macos/BudgetComposer.xcworkspace";
 const MACOS_SCHEME = "BudgetComposer-macOS";
 const WINDOWS_SOLUTION = "windows/MyApp.sln";
@@ -37,9 +47,11 @@ async function ensureNativeProject(platform: Platform): Promise<void> {
 
   await run(
     [
-      "bunx",
-      "expo-desktop",
+      "bun",
+      EXPO_DESKTOP_CLI,
       "prebuild",
+      "--platform",
+      platform,
       "--template",
       "expo-desktop-template-bare-minimum@beta",
     ],

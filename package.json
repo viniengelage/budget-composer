@@ -9,7 +9,7 @@
     "android": "expo run:android",
     "macos": "react-native run-macos",
     "windows": "react-native run-windows",
-    "prebuild": "expo-desktop prebuild --template expo-desktop-template-bare-minimum@beta",
+    "prebuild": "bun node_modules/expo-desktop/build/cli.js prebuild --platform desktop --template expo-desktop-template-bare-minimum@beta",
     "build": "bun run scripts/build.ts",
     "build:macos": "bun run scripts/build.ts --platform macos",
     "build:windows": "bun run scripts/build.ts --platform windows",
