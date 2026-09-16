@@ -15,6 +15,13 @@ const SOURCE = "assets/icon-source.png";
 const ICONSET = "assets/icon.iconset";
 const WINDOWS_PNG = "assets/icon.png";
 
+/**
+ * 256 é o teto do formato ICO. Mandar 1024 faz o Hutch recusar com
+ * `PngTooLarge` só no runner Windows — o build do macOS passa numa boa e a
+ * quebra aparece longe daqui.
+ */
+const WINDOWS_SIZE = 256;
+
 /** Nome do arquivo → lado em pixels, no formato que o `iconutil` espera. */
 const ICONSET_SIZES: readonly [string, number][] = [
   ["icon_16x16.png", 16],
@@ -60,7 +67,9 @@ for (const [name, size] of ICONSET_SIZES) {
   await resize(SOURCE, join(ICONSET, name), size);
 }
 
-await resize(SOURCE, WINDOWS_PNG, 1024);
+await resize(SOURCE, WINDOWS_PNG, WINDOWS_SIZE);
 
 console.log(`${ICONSET_SIZES.length} tamanhos em ${ICONSET}`);
-console.log(`${WINDOWS_PNG} para Windows e Linux (o Hutch converte para .ico)`);
+console.log(
+  `${WINDOWS_PNG} em ${WINDOWS_SIZE}px para Windows e Linux (o Hutch converte para .ico)`,
+);
