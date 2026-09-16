@@ -128,13 +128,31 @@ Um detalhe que confunde em teste: o caminho inclui o **canal**, então uma build
 autenticação**. O app continua funcionando normalmente — ele só nunca encontra
 versão nova, e você instala as atualizações à mão baixando o `.zip` da Release.
 
+**Não resolva isso com um token dentro do app.** Um token embarcado é legível
+com `strings` no executável, um PAT com escopo `repo` dá leitura e escrita no
+código-fonte, e o updater do Electrobun chama `fetch(url, { signal })` sem
+nenhuma opção de cabeçalho — não há onde injetar autenticação sem fazer patch
+no SDK. O segredo tem que ficar no CI, nunca no cliente.
+
 Duas formas de ligar:
 
-1. **Tornar este repositório público.** Nada mais a fazer.
-2. **Criar um repositório público só para as releases** (o código continua
-   privado). Depois, apontar `release.baseUrl` em `electrobun.config.ts` para
-   ele e fazer o job `release` publicar lá, usando um token com permissão de
-   escrita guardado nos segredos do repositório.
+**1. Tornar este repositório público.** Nada a configurar; o workflow já
+publica aqui. O histórico foi conferido e não contém dado pessoal —
+`reference/` e `.env.local` nunca foram commitados.
+
+**2. Publicar num repositório público separado**, mantendo o código privado:
+
+1. Crie o repositório público (ex.: `budget-composer-releases`), vazio.
+2. Gere um token de acesso com permissão de escrita **só nesse** repositório
+   (fine-grained: *Contents: Read and write*).
+3. Neste repositório, em *Settings → Secrets and variables → Actions*:
+   - variável `RELEASES_REPO` = `viniengelage/budget-composer-releases`
+   - segredo `RELEASES_TOKEN` = o token
+4. Ajuste `release.baseUrl` em `electrobun.config.ts` para o novo repositório.
+
+O job `check` confere que o `baseUrl` aponta para onde o workflow publica e
+quebra o build se os dois discordarem — senão o app ficaria quieto para sempre,
+sem nunca achar atualização, e ninguém perceberia.
 
 ## Impressão do PDF
 

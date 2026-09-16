@@ -36,6 +36,18 @@ jobs:
       - run: bun run lint
       - run: bun test
 
+      # Se o `baseUrl` apontar para um lugar diferente de onde publicamos, o app
+      # nunca acha atualização e ninguém percebe — ele simplesmente fica quieto
+      # para sempre. Melhor quebrar o CI aqui.
+      - name: Conferir que o app procura atualização onde publicamos
+        run: |
+          target="${{ vars.RELEASES_REPO || github.repository }}"
+          expected="https://github.com/$target/releases/latest/download"
+          grep -q "$expected" electrobun.config.ts || {
+            echo "release.baseUrl em electrobun.config.ts não aponta para $expected"
+            exit 1
+          }
+
   build:
     name: Instalador ${{ matrix.label }}
     needs: check
@@ -104,9 +116,15 @@ jobs:
 
       # Uma Release nova por push. É dela que o app instalado busca atualização,
       # através de `release.baseUrl` (.../releases/latest/download).
+      # Publica neste repositório por padrão. Definindo a variável
+      # `RELEASES_REPO` e o segredo `RELEASES_TOKEN`, publica num repositório
+      # público separado — assim o código segue privado e o app baixa
+      # atualização sem precisar de token nenhum dentro dele.
       - name: Publicar
         uses: softprops/action-gh-release@v2
         with:
+          repository: ${{ vars.RELEASES_REPO || github.repository }}
+          token: ${{ secrets.RELEASES_TOKEN || secrets.GITHUB_TOKEN }}
           tag_name: v1.0.${{ github.run_number }}
           name: Versão 1.0.${{ github.run_number }}
           files: release-artifacts/*
