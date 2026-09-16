@@ -1,3 +1,4 @@
+import { PrintLayer } from "@/app/print-layer";
 import { AppProvider } from "@/app/provider";
 import { Router } from "@/app/router";
 import { Sidebar } from "@/components/layouts/sidebar";
@@ -10,6 +11,7 @@ export function App() {
   return (
     <AppProvider>
       <AppShell />
+      <PrintLayer />
     </AppProvider>
   );
 }
@@ -25,7 +27,7 @@ function AppShell() {
     company?.name === undefined || company.name === "" ? "Sua empresa" : company.name;
 
   return (
-    <div className="flex h-full">
+    <div className="app-shell flex h-full">
       <Sidebar
         companyName={companyName}
         currentRoute={route}

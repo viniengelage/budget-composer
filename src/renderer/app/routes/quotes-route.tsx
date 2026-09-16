@@ -6,9 +6,11 @@ import { ROUTES } from "@/config/routes";
 import { useQuotes } from "@/features/quotes/api/quotes";
 import { QuoteList } from "@/features/quotes/components/quote-list";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { usePrintStore } from "@/stores/print-store";
 
 export function QuotesRoute() {
   const navigate = useNavigationStore((state) => state.navigate);
+  const printQuote = usePrintStore((state) => state.printQuote);
   const [search, setSearch] = useState("");
   const { data: quotes = [], isPending } = useQuotes(search.trim());
 
@@ -41,7 +43,7 @@ export function QuotesRoute() {
           isLoading={isPending}
           searchTerm={search.trim()}
           onOpen={() => undefined}
-          onExportPdf={() => undefined}
+          onExportPdf={(quote) => printQuote(quote.id)}
           onCreate={goToCreate}
           onClearSearch={() => setSearch("")}
         />

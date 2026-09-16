@@ -128,6 +128,16 @@ Os dois usam o webview do sistema, que são motores diferentes. Qualquer coisa
 sensível a engine (layout, `<input type="date">`, impressão, fonte) precisa ser
 conferida nos dois antes de considerar pronta.
 
+**Impressão é assimétrica.** `window.print()` abre o diálogo no WebView2
+(Windows), mas no WKWebView (macOS) não faz nada: o Electrobun não implementa o
+delegate nativo de impressão. O código detecta isso pelo evento `beforeprint`
+(quem imprime dispara) em vez de checar `process.platform`, e avisa a pessoa.
+Não “conserte” trocando por detecção de sistema operacional.
+
+Para conferir o documento A4 sem imprimir, rode `bun run preview:doc`: ele
+renderiza o PDF para HTML estático com dados fictícios e marca em vermelho onde
+a folha termina.
+
 ## O que não fazer
 
 - Não versione `.hutch/`, `dist/`, `build/` nem `artifacts/` — são gerados.

@@ -17,11 +17,13 @@ import {
   type QuoteDraftErrors,
 } from "@/features/quotes/types/quote-schema";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { usePrintStore } from "@/stores/print-store";
 import { addDays, toIsoDate } from "@shared/format";
 import type { Product } from "@shared/types";
 
 export function QuoteCreateRoute() {
   const navigate = useNavigationStore((state) => state.navigate);
+  const printQuote = usePrintStore((state) => state.printQuote);
 
   const {
     draft,
@@ -64,7 +66,7 @@ export function QuoteCreateRoute() {
     setPickerOpen(false);
   };
 
-  const save = () => {
+  const save = (thenPrint: boolean) => {
     const found = validateQuoteDraft(draft);
     setErrors(found ?? {});
     if (found) return;
@@ -88,7 +90,12 @@ export function QuoteCreateRoute() {
         validUntil: addDays(issuedAt, company?.defaultValidityDays ?? 15),
         status: "pending",
       },
-      { onSuccess: goBack },
+      {
+        onSuccess: (created) => {
+          if (thenPrint) printQuote(created.id);
+          goBack();
+        },
+      },
     );
   };
 
@@ -150,12 +157,20 @@ export function QuoteCreateRoute() {
 
           <div className="flex flex-col gap-3">
             <Button
-              label="Salvar orçamento"
-              icon="check-circle"
+              label="Salvar e gerar PDF"
+              icon="file-pdf"
               size="lg"
               fullWidth
               loading={createQuote.isPending}
-              onClick={save}
+              onClick={() => save(true)}
+            />
+            <Button
+              label="Salvar sem gerar PDF"
+              variant="secondary"
+              size="lg"
+              fullWidth
+              disabled={createQuote.isPending}
+              onClick={() => save(false)}
             />
             <Button
               label="Cancelar e voltar"

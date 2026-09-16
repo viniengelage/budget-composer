@@ -42,6 +42,7 @@ bun run dev:hmr    # mesma coisa, com hot reload da interface
 | `bun test` | Só os testes |
 | `bun run build` | Instalador do sistema onde você está |
 | `bun run build:windows` | Instalador `.exe` — **exige rodar no Windows** |
+| `bun run preview:doc` | Renderiza o orçamento A4 para HTML, com a marca de onde a folha termina |
 
 O Hutch empacota para o sistema onde ele roda; não existe cross-compile. Para
 sair com os dois instaladores de uma vez, use o workflow
@@ -83,6 +84,29 @@ Um arquivo SQLite em `orcamentos.db`, dentro da pasta de dados do usuário
 
 O esquema é versionado por `PRAGMA user_version` em `src/main/db/migrations.ts`.
 Migração publicada nunca é editada; a próxima mudança entra como um array novo.
+
+## Impressão do PDF
+
+O orçamento impresso é o mesmo React do app, com uma folha de estilo de
+impressão: `window.print()` abre o diálogo do sistema e a pessoa escolhe
+"Salvar como PDF". Sem biblioteca de PDF, sem layout em coordenadas — o
+documento usa os mesmos tokens que o resto do app.
+
+**Isso funciona no Windows (WebView2) e não no macOS (WKWebView)**, porque o
+Electrobun não implementa o delegate nativo de impressão do WebKit. O app
+detecta a diferença pelo evento `beforeprint` e, quando a impressão não abre,
+avisa em vez de fingir que deu certo. O alvo do produto é Windows; no Mac o
+resto do app funciona normalmente.
+
+Para conferir o layout da folha sem imprimir:
+
+```bash
+bun run preview:doc
+open dist/preview-document.html
+```
+
+Ele usa dados fictícios e desenha uma linha vermelha onde a página A4 termina —
+se o conteúdo cruzar a linha, o orçamento vai sair em duas folhas.
 
 ## Design
 

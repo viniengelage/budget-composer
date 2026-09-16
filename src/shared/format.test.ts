@@ -11,6 +11,7 @@ import {
   formatQuantity,
   maskCnpj,
   parseCurrency,
+  pixKeyKind,
   parseQuantity,
 } from "@shared/format";
 
@@ -152,5 +153,31 @@ describe("quantidade", () => {
   test("volta a virar texto do mesmo jeito", () => {
     expect(formatQuantity(parseQuantity("12,5"))).toBe("12,5");
     expect(formatQuantity(parseQuantity("250"))).toBe("250");
+  });
+});
+
+describe("chave Pix", () => {
+  test("reconhece telefone com e sem máscara", () => {
+    expect(pixKeyKind("(45) 9 9977-8048")).toBe("(telefone)");
+    expect(pixKeyKind("45999778048")).toBe("(telefone)");
+    expect(pixKeyKind("4530251180")).toBe("(telefone)");
+  });
+
+  test("reconhece e-mail", () => {
+    expect(pixKeyKind("contato@exemplo.com")).toBe("(e-mail)");
+  });
+
+  test("reconhece CNPJ", () => {
+    expect(pixKeyKind("12.345.678/0001-90")).toBe("(CNPJ)");
+  });
+
+  test("chave aleatória não tem dígito nenhum", () => {
+    expect(pixKeyKind("a1b2c3d4-e5f6")).toBe("");
+    expect(pixKeyKind("chave-sem-numero")).toBe("(aleatória)");
+  });
+
+  test("chave em branco não rotula nada", () => {
+    expect(pixKeyKind("")).toBe("");
+    expect(pixKeyKind("   ")).toBe("");
   });
 });

@@ -68,6 +68,24 @@
   --color-line: var(--color-neutral-200);
   --color-line-strong: var(--color-neutral-400);
 
+  /*
+   * Escala separada para o documento impresso. O corpo do app é 17px porque é
+   * lido numa tela a meio metro de distância; o orçamento é lido no papel, na
+   * mão, e precisa caber numa folha A4.
+   */
+  --text-doc-label: 8px;
+  --text-doc-label--line-height: 1.3;
+  --text-doc-sm: 9.5px;
+  --text-doc-sm--line-height: 1.45;
+  --text-doc: 11px;
+  --text-doc--line-height: 1.5;
+  --text-doc-lg: 13px;
+  --text-doc-lg--line-height: 1.35;
+  --text-doc-total: 20px;
+  --text-doc-total--line-height: 1.2;
+  --text-doc-title: 22px;
+  --text-doc-title--line-height: 1.2;
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
@@ -126,5 +144,95 @@
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--color-neutral-400) transparent;
+  }
+
+  /* Geometria da folha. Em milímetros porque o destino é papel. */
+  .quote-document {
+    display: flex;
+    flex-direction: column;
+    width: 210mm;
+    min-height: 297mm;
+    background-color: #ffffff;
+    color: var(--color-content);
+  }
+
+  /* Sangra até as duas bordas da folha, por fora do padding do corpo. */
+  .quote-document-rule {
+    flex-shrink: 0;
+    height: 6px;
+    background-color: var(--color-brand-700);
+  }
+
+  /* Separado da folha para a faixa verde do topo poder sangrar até a borda. */
+  .quote-document-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 8mm 12mm 10mm;
+  }
+
+  /*
+   * O documento não existe na tela: fica fora do fluxo até a hora de imprimir.
+   * `position: fixed` em vez de `display: none` porque conteúdo escondido não
+   * carrega imagem nem calcula layout, e a gente precisa esperar a logo
+   * decodificar antes de chamar o print.
+   */
+  .print-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+    background-color: #ffffff;
+  }
+
+  .app-shell {
+    display: none !important;
+  }
+
+  .print-root {
+    position: static;
+    z-index: auto;
+    opacity: 1;
+  }
+
+  /* Sem isto o WebView2 e o WKWebView descartam fundo colorido ao imprimir, e
+     o documento sai sem a faixa verde nem o bloco do total. */
+  .print-root * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .quote-document {
+    width: auto;
+    min-height: auto;
+  }
+}
+
+@media print {
+  /* Linha de item não parte no meio entre duas folhas, e o cabeçalho da
+     tabela se repete na folha seguinte — senão a segunda página chega com
+     colunas de números sem título. */
+  .quote-document thead {
+    display: table-header-group;
+  }
+
+  .quote-document tr {
+    break-inside: avoid;
   }
 }

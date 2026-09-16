@@ -146,6 +146,22 @@ export function formatPhone(value: string): string {
   return value;
 }
 
+/**
+ * Diz de que tipo é a chave Pix para o cliente não hesitar ao pagar. Vai no
+ * PDF ao lado da chave.
+ */
+export function pixKeyKind(key: string): string {
+  const trimmed = key.trim();
+  if (trimmed === "") return "";
+  if (trimmed.includes("@")) return "(e-mail)";
+
+  const digits = onlyDigits(trimmed);
+  if (digits.length === 10 || digits.length === 11) return "(telefone)";
+  if (digits.length === 14) return "(CNPJ)";
+  if (digits.length === 0) return "(aleatória)";
+  return "";
+}
+
 export function formatZipCode(value: string): string {
   const digits = onlyDigits(value);
   return digits.length === 8 ? digits.replace(/(\d{5})(\d{3})/, "$1-$2") : value;

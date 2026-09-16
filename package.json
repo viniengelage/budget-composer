@@ -8,6 +8,7 @@
     "dev:hmr": "hutch run dev:hmr",
     "devkit": "hutch electrobun prepare",
     "ui": "vite build",
+    "preview:doc": "vite build && bun run scripts/preview-document.tsx",
     "build": "bun run scripts/build.ts",
     "build:canary": "bun run scripts/build.ts --env canary",
     "build:windows": "bun run scripts/build.ts --target windows",
