@@ -6,6 +6,20 @@ export default {
     identifier: "br.com.grameira.orcamentos",
     version: "1.0.0",
   },
+  /*
+   * Onde o app instalado procura atualização. São arquivos estáticos: o
+   * workflow publica o conteúdo de `artifacts/` numa Release, e o updater monta
+   * as URLs a partir daqui.
+   *
+   * ATENÇÃO: enquanto o repositório for privado, esta URL responde 404 sem
+   * autenticação e a atualização automática não funciona — o app continua
+   * normal, só nunca encontra versão nova. Ver README, seção "Atualização
+   * automática".
+   */
+  release: {
+    baseUrl: "https://github.com/viniengelage/budget-composer/releases/latest/download",
+    generatePatch: true,
+  },
   build: {
     mainProcess: "cottontail",
     cottontail: {

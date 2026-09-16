@@ -1,11 +1,14 @@
+import { useState } from "react";
+
 import { PrintLayer } from "@/app/print-layer";
 import { AppProvider } from "@/app/provider";
 import { Router } from "@/app/router";
 import { Sidebar } from "@/components/layouts/sidebar";
 import { ROUTES } from "@/config/routes";
 import { useAppInfo, useCompany } from "@/features/company/api/company";
+import { useApplyUpdate, useUpdateState } from "@/features/updates/api/updates";
+import { UpdateBanner } from "@/features/updates/components/update-banner";
 import { useNavigationStore } from "@/stores/navigation-store";
-import { APP_VERSION } from "@shared/app-info";
 
 export function App() {
   return (
@@ -13,6 +16,23 @@ export function App() {
       <AppShell />
       <PrintLayer />
     </AppProvider>
+  );
+}
+
+function UpdateSlot() {
+  const [dismissed, setDismissed] = useState(false);
+  const { data: update } = useUpdateState();
+  const applyUpdate = useApplyUpdate();
+
+  if (dismissed || update?.state !== "ready") return null;
+
+  return (
+    <UpdateBanner
+      version={update.version}
+      applying={applyUpdate.isPending}
+      onApply={() => applyUpdate.mutate()}
+      onDismiss={() => setDismissed(true)}
+    />
   );
 }
 
@@ -33,9 +53,10 @@ function AppShell() {
         currentRoute={route}
         onNavigate={navigate}
         onHelp={() => navigate(ROUTES.settings)}
-        appVersion={info?.version ?? APP_VERSION}
+        appVersion={info?.version ?? "…"}
       />
       <main className="flex min-w-0 flex-1 flex-col bg-canvas">
+        <UpdateSlot />
         <Router route={route} />
       </main>
     </div>

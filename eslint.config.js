@@ -33,7 +33,13 @@ const RENDERER_SHARED_DIRS = [
   "./src/renderer/stores",
 ];
 
-const RENDERER_FEATURES = ["quotes", "products", "customers", "company"];
+const RENDERER_FEATURES = [
+  "quotes",
+  "products",
+  "customers",
+  "company",
+  "updates",
+];
 
 module.exports = tseslint.config(
   {
@@ -146,6 +152,11 @@ module.exports = tseslint.config(
     // default export exigido por contrato de ferramenta
     files: ["vite.config.ts", "electrobun.config.ts", "hutch.config.ts"],
     rules: { "import/no-default-export": "off" },
+  },
+  {
+    // Scripts de build rodam soltos, fora dos aliases do app.
+    files: ["scripts/**/*.ts"],
+    rules: { "no-restricted-imports": "off" },
   },
   prettier,
 );

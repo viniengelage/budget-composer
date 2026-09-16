@@ -86,6 +86,40 @@ Um arquivo SQLite em `orcamentos.db`, dentro da pasta de dados do usuário
 O esquema é versionado por `PRAGMA user_version` em `src/main/db/migrations.ts`.
 Migração publicada nunca é editada; a próxima mudança entra como um array novo.
 
+## Releases e atualização automática
+
+Todo push na `main` roda os testes, compila os dois instaladores nos runners
+nativos e publica uma Release com a tag `v1.0.<número da execução>`. O
+instalador do Windows é o `win-x64-OrcamentosGrameira-Setup.zip`, que contém o
+`.exe`.
+
+A versão é carimbada pelo próprio workflow, então o número que aparece na barra
+lateral do programa, o nome da Release e a tag do git são sempre o mesmo.
+
+Do lado do app: 8 segundos depois de abrir, ele consulta
+`release.baseUrl`, baixa a atualização em segundo plano e só então mostra uma
+faixa verde perguntando se quer instalar. A pessoa nunca espera um download nem
+vê aviso de erro se a internet estiver fora — falha de checagem é silenciosa de
+propósito, porque não é problema que ela possa resolver.
+
+A comparação é por **hash** do pacote, não por número de versão. Quando existe a
+Release anterior, o Hutch gera um patch binário e a atualização baixa poucos
+kilobytes; se o patch não existir, cai para o pacote inteiro.
+
+### Enquanto o repositório for privado, isto não funciona
+
+`https://github.com/.../releases/latest/download/...` responde **404 sem
+autenticação**. O app continua funcionando normalmente — ele só nunca encontra
+versão nova, e você instala as atualizações à mão baixando o `.zip` da Release.
+
+Duas formas de ligar:
+
+1. **Tornar este repositório público.** Nada mais a fazer.
+2. **Criar um repositório público só para as releases** (o código continua
+   privado). Depois, apontar `release.baseUrl` em `electrobun.config.ts` para
+   ele e fazer o job `release` publicar lá, usando um token com permissão de
+   escrita guardado nos segredos do repositório.
+
 ## Impressão do PDF
 
 O orçamento impresso é o mesmo React do app, com uma folha de estilo de

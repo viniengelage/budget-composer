@@ -2,6 +2,7 @@ import { BrowserView, BrowserWindow, Updater, type RPCSchema } from "electrobun/
 
 import { installApplicationMenu } from "@main/app-menu";
 import { requestHandlers } from "@main/rpc/handlers";
+import { scheduleUpdateCheck } from "@main/services/updater/update-service";
 import { APP_NAME } from "@shared/app-info";
 import type { AppRequests } from "@shared/rpc-contract";
 
@@ -39,6 +40,8 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 installApplicationMenu();
 
 const url = await resolveViewUrl();
+
+scheduleUpdateCheck();
 
 new BrowserWindow({
   title: APP_NAME,

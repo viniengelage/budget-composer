@@ -10,6 +10,7 @@ import type {
   QuoteStatus,
   UnitOfMeasure,
 } from "@shared/types";
+import type { UpdateSnapshot } from "@shared/update";
 
 export interface ProductInput {
   name: string;
@@ -93,4 +94,7 @@ export type AppRequests = {
     params: Record<string, never>;
     response: Result<{ version: string; databasePath: string }>;
   };
+
+  updateState: { params: Record<string, never>; response: Result<UpdateSnapshot> };
+  applyUpdate: { params: Record<string, never>; response: Result<null> };
 };

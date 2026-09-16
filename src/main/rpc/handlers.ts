@@ -26,7 +26,11 @@ import {
   updateQuote,
 } from "@main/modules/quotes/quotes-repository";
 import { lookupCnpj } from "@main/services/cnpj/brasil-api";
-import { APP_VERSION } from "@shared/app-info";
+import {
+  applyDownloadedUpdate,
+  installedVersion,
+  updateSnapshot,
+} from "@main/services/updater/update-service";
 import { attempt, attemptAsync } from "@shared/result";
 import type { AppRequests } from "@shared/rpc-contract";
 
@@ -73,5 +77,15 @@ export const requestHandlers: Handlers = {
   lookupCnpj: ({ cnpj }) => attemptAsync(() => lookupCnpj(cnpj)),
 
   appInfo: () =>
-    attempt(() => ({ version: APP_VERSION, databasePath: databaseLocation() })),
+    attemptAsync(async () => ({
+      version: await installedVersion(),
+      databasePath: databaseLocation(),
+    })),
+
+  updateState: () => attempt(() => updateSnapshot()),
+  applyUpdate: () =>
+    attemptAsync(async () => {
+      await applyDownloadedUpdate();
+      return null;
+    }),
 };
