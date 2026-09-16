@@ -1,0 +1,74 @@
+name: Build desktop
+
+# Cada alvo roda no SO nativo: não existe cross-compile para
+# react-native-macos (Xcode) nem react-native-windows (MSBuild).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Tipos, lint e testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun test
+
+  macos:
+    name: Build macOS
+    needs: check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dos Pods
+        uses: actions/cache@v4
+        with:
+          path: macos/Pods
+          key: pods-${{ hashFiles('macos/Podfile.lock') }}
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build:macos
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orcamentos-grameira-macos
+          path: build/macos/Build/Products/Release/*.app
+          if-no-files-found: error
+
+  windows:
+    name: Build Windows
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Configurar MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - run: bun install --frozen-lockfile
+      - run: bun run build:windows
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orcamentos-grameira-windows
+          path: windows/**/AppPackages/**
+          # "warn": o objetivo primário deste job é COMPILAR. O empacotamento
+          # MSIX depende de configuração de assinatura que ainda não fizemos,
+          # e falhar por falta de artefato esconderia o sinal que interessa.
+          if-no-files-found: warn

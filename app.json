@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "BudgetComposer",
+    "slug": "BudgetComposer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.grameiradojonas.orcamentos",
+      "infoPlist": {
+        "CFBundleName": "Orcamentos Grameira"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.grameiradojonas.orcamentos"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "windows": {
+      "displayName": "Orcamentos Grameira",
+      "namespace": "com.grameiradojonas.orcamentos",
+      "packageGuid": "c41fddbb-1338-49a5-be37-1e01543a642e",
+      "projectGuid": "a5cd069a-20b5-41d0-95d9-2ab0a5ef6693"
+    },
+    "macos": {
+      "bundleIdentifier": "com.grameiradojonas.orcamentos",
+      "infoPlist": {
+        "CFBundleName": "Orcamentos Grameira"
+      }
+    },
+    "experiments": {
+      "outOfTreePlatforms": true
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "macos",
+      "windows"
+    ],
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}
