@@ -43,6 +43,7 @@ bun run dev:hmr    # mesma coisa, com hot reload da interface
 | `bun run build` | Instalador do sistema onde você está |
 | `bun run build:windows` | Instalador `.exe` — **exige rodar no Windows** |
 | `bun run preview:doc` | Renderiza o orçamento A4 para HTML, com a marca de onde a folha termina |
+| `bun run icons` | Regera os ícones a partir de `assets/icon-source.png` (só macOS) |
 
 O Hutch empacota para o sistema onde ele roda; não existe cross-compile. Para
 sair com os dois instaladores de uma vez, use o workflow
@@ -107,6 +108,16 @@ open dist/preview-document.html
 
 Ele usa dados fictícios e desenha uma linha vermelha onde a página A4 termina —
 se o conteúdo cruzar a linha, o orçamento vai sair em duas folhas.
+
+## Ícone do app
+
+A arte fica em `assets/icon-source.png` (quadrada, 1287×1287). O
+`bun run icons` gera de lá o `assets/icon.iconset` que o macOS usa e o
+`assets/icon.png` de 1024px que o Hutch converte para `.ico` no Windows.
+
+Os arquivos gerados são versionados de propósito. O script usa `sips`, que só
+existe no macOS, e o instalador do Windows sai de um runner Windows — gerar no
+build quebraria esse job. Só rode o comando ao trocar a arte.
 
 ## Design
 

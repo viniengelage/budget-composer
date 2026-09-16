@@ -18,12 +18,16 @@ export default {
     watchIgnore: ["dist/**"],
     mac: {
       bundleCEF: false,
+      icons: "assets/icon.iconset",
     },
     win: {
       bundleCEF: false,
+      // O Hutch converte o PNG para .ico e embute no executável e no instalador.
+      icon: "assets/icon.png",
     },
     linux: {
       bundleCEF: false,
+      icon: "assets/icon.png",
     },
   },
 } satisfies ElectrobunConfig;
