@@ -57,13 +57,37 @@ Compilar não é funcionar. Em ordem:
 7. **Concorrência** — duas queries simultâneas não travam (há `busy_timeout`
    de 5 s e `SQLITE_OPEN_FULLMUTEX`)
 
-## Suspeitas conhecidas
+## API verificada contra os headers do RNW
 
-Onde eu apostaria que o primeiro build falha:
+Sem compilador, mas os headers estão em `node_modules/react-native-windows`.
+Conferido um a um:
 
-- `AddAttributedModules(packageBuilder, true)` pode não registrar no
-  `TurboModuleRegistry` nesta versão — daí o fallback no JS
-- `winsqlite3.lib` pode exigir `WindowsTargetPlatformMinVersion` mais alto
-- `React::JSValueType::Int64` pode não existir com esse nome; números de JS
-  chegam como `Double` na prática
-- `ReactPromise<void>` pode precisar de outra assinatura para `close`
+| Uso no código | Verificação |
+|---|---|
+| `React::JSValueType::Int64` / `Double` | enum existe com esses valores |
+| `JSValue::Type()` | `JSValue.h:269` |
+| `ReactPromise<void>::Resolve()` | especialização existe |
+| `ReactPromise<T>::Reject(char const*)` | sobrecarga existe |
+| `JSValue(std::nullptr_t)` | existe — `row[col] = nullptr` compila |
+| `JSValueObject` indexado por `std::string` | é `std::map<std::string, JSValue>` |
+| `JSValueArray` em range-for | é `std::vector<JSValue>` |
+| `AddAttributedModules(builder, bool)` | `ModuleRegistration.h:199` |
+| `REACT_MODULE(struct, nome)` | macro aceita nome opcional |
+
+A revisão também pegou três erros prováveis, já corrigidos: faltavam
+`<cstring>` (`_strnicmp`) e `<stdexcept>` (`std::runtime_error`), e
+`sqlite3_changes()` devolve `int` — que deixaria a escolha de sobrecarga do
+`JSValue` ambígua entre `bool`, `int64_t` e `double`.
+
+## O que ainda pode quebrar
+
+O que não dá para verificar sem Windows:
+
+- **`winsqlite3`** — se `<winsqlite/winsqlite3.h>` ou `winsqlite3.lib` não
+  estiverem no SDK do runner, ou se `SQLITE_TRANSIENT` não for exportado por
+  esse header. Plano B: vendorizar a amalgamation
+- **Autolinking** — se o `react-native autolink-windows` segue a dependência
+  `file:` até `modules/rnw-sqlite`
+- **Registro em runtime** — `AddAttributedModules(.., true)` compila, mas se
+  aparece no `TurboModuleRegistry` é comportamento, não compilação. Por isso
+  o fallback para `NativeModules` no lado JS

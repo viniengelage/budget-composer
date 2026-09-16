@@ -7,9 +7,11 @@
 #include <winsqlite/winsqlite3.h>
 
 #include <cstdlib>
+#include <cstring>    // _strnicmp
 #include <filesystem>
 #include <map>
 #include <mutex>
+#include <stdexcept>  // std::runtime_error
 #include <string>
 
 namespace winrt::RnwSqlite {
@@ -112,7 +114,9 @@ struct RnwSqliteModule {
     sqlite3_finalize(statement);
 
     React::JSValueObject result;
-    result["rowsAffected"] = sqlite3_changes(db);
+    // Cast explícito: JSValue tem construtores para bool, int64_t e double,
+    // e um `int` cru deixaria a escolha da sobrecarga ambígua.
+    result["rowsAffected"] = static_cast<double>(sqlite3_changes(db));
 
     // insertId só faz sentido em INSERT. Devolver o rowid de um DELETE
     // levaria o chamador a gravar um id que não é dele.
