@@ -2,23 +2,23 @@ import {
   DatabaseError,
   type Database,
   type DatabaseDriver,
-  type ExecuteResult,
+  type SqlValue,
 } from "@/lib/db/types";
-import NativeRnwSqlite from "@modules/rnw-sqlite/src/NativeRnwSqlite";
+import {
+  NativeRnwSqlite,
+  type RnwSqliteModule,
+} from "@modules/rnw-sqlite/src/NativeRnwSqlite";
 
 /**
- * Driver de SQLite para Windows, sobre o TurboModule C++/WinRT `RnwSqlite`.
- *
- * ⚠️ A implementação nativa ainda NÃO existe. Este arquivo define o lado JS e
- * falha com mensagem explícita enquanto o C++ não for compilado — nunca com
- * um `undefined is not a function` no meio da tela da usuária.
+ * Driver de SQLite para Windows, sobre o módulo nativo C++/WinRT `RnwSqlite`
+ * (ver `modules/rnw-sqlite/windows`).
  */
-function requireNative() {
+function requireNative(): RnwSqliteModule {
   if (NativeRnwSqlite === null) {
     throw new Error(
-      "O módulo nativo RnwSqlite não está registrado. " +
-        "Rode `bun run prebuild` e depois `bunx react-native autolink-windows`, " +
-        "e confirme que modules/rnw-sqlite está nas dependências do package.json.",
+      "O módulo nativo RnwSqlite não está registrado.\n" +
+        "Verifique se 'rnw-sqlite' está nas dependências do package.json e rode:\n" +
+        "  bun run prebuild && bunx react-native autolink-windows",
     );
   }
   return NativeRnwSqlite;
@@ -30,8 +30,7 @@ function wrap(handle: number): Database {
   const api: Database = {
     async execute(sql, params = []) {
       try {
-        const raw = await native.execute(handle, sql, JSON.stringify(params));
-        return JSON.parse(raw) as ExecuteResult;
+        return await native.execute(handle, sql, params as SqlValue[]);
       } catch (error) {
         throw new DatabaseError("Falha ao executar instrução", sql, error);
       }
@@ -39,8 +38,7 @@ function wrap(handle: number): Database {
 
     async query(sql, params = []) {
       try {
-        const raw = await native.query(handle, sql, JSON.stringify(params));
-        return JSON.parse(raw) as never;
+        return (await native.query(handle, sql, params as SqlValue[])) as never;
       } catch (error) {
         throw new DatabaseError("Falha ao consultar", sql, error);
       }
@@ -50,8 +48,9 @@ function wrap(handle: number): Database {
      * Transação em SQL puro.
      *
      * O nativo não expõe API de transação de propósito: BEGIN/COMMIT/ROLLBACK
-     * são instruções SQL comuns, então isso é resolvido aqui e o C++ fica com
-     * quatro métodos em vez de sete.
+     * são instruções comuns, então resolver aqui deixa o C++ com quatro
+     * métodos em vez de sete. Menos C++ é menos superfície para depurar numa
+     * plataforma que não temos como testar localmente.
      */
     async transaction(fn) {
       await api.execute("BEGIN");

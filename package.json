@@ -40,6 +40,7 @@
     "react-native-macos": "0.81.7",
     "react-native-svg": "^15.15.5",
     "react-native-windows": "0.81.35",
+    "rnw-sqlite": "file:./modules/rnw-sqlite",
     "zod": "^4.1.11",
     "zustand": "^5.0.8"
   },
