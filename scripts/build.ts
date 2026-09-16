@@ -38,7 +38,7 @@ async function ensureNativeProject(platform: Platform): Promise<void> {
   await run(
     [
       "bunx",
-      "expo-desktop@beta",
+      "expo-desktop",
       "prebuild",
       "--template",
       "expo-desktop-template-bare-minimum@beta",
