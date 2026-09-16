@@ -4,8 +4,8 @@ import { Icon, Spinner, TextField, type FieldTone } from "@/components/ui";
 import { env } from "@/config/env";
 import { useCnpjLookup } from "@/features/quotes/api/cnpj";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import type { CnpjLookupResult, CompanyLookup } from "@shared/cnpj";
-import { maskCnpj, onlyDigits } from "@shared/format";
+import { cnpjDigits, type CnpjLookupResult, type CompanyLookup } from "@shared/cnpj";
+import { maskCnpj } from "@shared/format";
 
 export interface CnpjFieldProps {
   value: string;
@@ -77,7 +77,7 @@ function stateFor(
 }
 
 export function CnpjField({ value, onChange, onCompanyFound }: CnpjFieldProps) {
-  const digits = onlyDigits(value);
+  const digits = cnpjDigits(value);
   const settled = useDebouncedValue(digits, env.cnpjDebounceMs);
   const settledIsCurrent = settled === digits && settled.length === 14;
 
@@ -103,7 +103,7 @@ export function CnpjField({ value, onChange, onCompanyFound }: CnpjFieldProps) {
       inputMode="numeric"
       placeholder="00.000.000/0000-00"
       value={maskCnpj(value)}
-      onChange={(event) => onChange(onlyDigits(event.target.value))}
+      onChange={(event) => onChange(cnpjDigits(event.target.value))}
       tone={state.tone}
       hint={state.hint}
       trailing={state.trailing}

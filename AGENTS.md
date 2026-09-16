@@ -100,6 +100,22 @@ Tudo vem do `@theme` em `src/renderer/styles/theme.css`. Falta um valor?
 Adicione um token lá, não um literal na classe. O `@theme` espelha o Penpot
 (`orcamentos-core`, `orcamentos-semantic`) — mudou um, mude o outro.
 
+### Rede
+Nunca chame `fetch` direto. Use `fetchJson` de `@main/services/http/fetch-json`.
+
+O `fetch` do Cottontail **não descomprime a resposta**: servidor que responde
+`Content-Encoding: br` ou `gzip` faz a chamada estourar com
+"Decompression error", e de dentro de um `catch` isso parece internet fora.
+`fetchJson` pede `identity` e resolve. Foi assim que a busca de CNPJ ficou
+quebrada por um tempo, com uma mensagem que culpava a rede.
+
+Para testar algo do processo principal no runtime de verdade (o bun **não** tem
+esse bug, então `bun test` não pega):
+
+```bash
+build/<alvo>/*.app/Contents/MacOS/cottontail seu-script.ts
+```
+
 ### Bibliotecas externas
 Não importe lib de terceiro direto numa feature. Envolva em `src/renderer/lib/`
 (ou `src/main/services/`). O SDK do Electrobun só aparece em

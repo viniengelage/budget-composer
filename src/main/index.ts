@@ -1,5 +1,6 @@
 import { BrowserView, BrowserWindow, Updater, type RPCSchema } from "electrobun/main";
 
+import { installApplicationMenu } from "@main/app-menu";
 import { requestHandlers } from "@main/rpc/handlers";
 import { APP_NAME } from "@shared/app-info";
 import type { AppRequests } from "@shared/rpc-contract";
@@ -34,6 +35,8 @@ const rpc = BrowserView.defineRPC<AppRPC>({
     messages: {},
   },
 });
+
+installApplicationMenu();
 
 const url = await resolveViewUrl();
 
