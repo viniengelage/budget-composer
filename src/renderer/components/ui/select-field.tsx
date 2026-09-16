@@ -1,4 +1,4 @@
-import { useId, type ReactNode, type SelectHTMLAttributes } from "react";
+import { useId, type ComponentPropsWithRef, type ReactNode } from "react";
 
 import { cn } from "@/utils/cn";
 
@@ -7,7 +7,7 @@ export interface SelectOption {
   label: string;
 }
 
-export interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectFieldProps extends ComponentPropsWithRef<"select"> {
   label: string;
   options: readonly SelectOption[];
   hint?: ReactNode;

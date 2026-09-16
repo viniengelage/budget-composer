@@ -1,12 +1,11 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from "react";
+import { useId, type ComponentPropsWithRef, type ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/ui/icon";
 import { cn } from "@/utils/cn";
 
 export type FieldTone = "default" | "success" | "error" | "warning";
 
-export interface TextFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
+export interface TextFieldProps extends Omit<ComponentPropsWithRef<"input">, "size"> {
   /** Rótulo visível sempre. Placeholder nunca substitui rótulo. */
   label: string;
   optional?: boolean;

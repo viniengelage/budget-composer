@@ -40,6 +40,7 @@ module.exports = tseslint.config(
     ignores: [
       "node_modules/**",
       ".hutch/**",
+      ".cottontail-tmp/**",
       "dist/**",
       "build/**",
       "artifacts/**",

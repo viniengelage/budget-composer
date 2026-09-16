@@ -1,7 +1,8 @@
 node_modules/
 
-# gerado pelo Hutch (devkit projetado, toolchains)
+# gerado pelo Hutch (devkit projetado, toolchains, temporários do Cottontail)
 .hutch/
+.cottontail-tmp/
 
 # saída do Vite e do empacotador do Electrobun
 dist/

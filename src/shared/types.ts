@@ -2,7 +2,9 @@ export type Cents = number;
 
 export type IsoDate = string;
 
-export type UnitOfMeasure = "m2" | "m" | "un" | "saco" | "servico" | "hora";
+export const UNITS = ["m2", "m", "un", "saco", "servico", "hora"] as const;
+
+export type UnitOfMeasure = (typeof UNITS)[number];
 
 export type QuoteStatus = "pending" | "approved" | "expired" | "rejected";
 
@@ -72,11 +74,3 @@ export interface Company {
   defaultValidityDays: number;
 }
 
-export const UNITS: readonly UnitOfMeasure[] = [
-  "m2",
-  "m",
-  "un",
-  "saco",
-  "servico",
-  "hora",
-];

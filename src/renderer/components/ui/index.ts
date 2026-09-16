@@ -1,7 +1,12 @@
 export { Button, type ButtonProps } from "@/components/ui/button";
 export { Card, type CardProps } from "@/components/ui/card";
+export {
+  ConfirmDialog,
+  type ConfirmDialogProps,
+} from "@/components/ui/confirm-dialog";
 export { EmptyState, type EmptyStateProps } from "@/components/ui/empty-state";
 export { Icon, type IconName, type IconProps } from "@/components/ui/icon";
+export { Modal, type ModalProps } from "@/components/ui/modal";
 export {
   SelectField,
   type SelectFieldProps,
