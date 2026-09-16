@@ -59,6 +59,20 @@ jobs:
       - name: Configurar MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      # O RNW 0.81 pede o SDK 10.0.22621.0, que o runner com Visual Studio 18
+      # não tem. Antes de fixar uma versão no chute, medir o que existe.
+      - name: Diagnóstico do ambiente
+        shell: pwsh
+        run: |
+          Write-Host "== Windows SDKs instalados =="
+          Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\Include' -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty Name
+          Write-Host "== Toolsets do MSVC =="
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          Write-Host "VS: $vs"
+          Get-ChildItem "$vs\VC\Tools\MSVC" -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty Name
+
       - run: bun install --frozen-lockfile
       - run: bun run build:windows
 
