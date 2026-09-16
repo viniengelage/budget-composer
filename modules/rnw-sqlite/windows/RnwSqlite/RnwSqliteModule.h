@@ -6,7 +6,6 @@
 
 #include <winsqlite/winsqlite3.h>
 
-#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <map>
@@ -227,16 +226,19 @@ struct RnwSqliteModule {
   static std::string ResolveDatabasePath(const std::string& name) {
     if (name == ":memory:") return name;
 
-    const char* localAppData = std::getenv("LOCALAPPDATA");
-    if (localAppData == nullptr) {
-      throw std::runtime_error("LOCALAPPDATA não está definida.");
+    wchar_t buffer[MAX_PATH]{};
+    const DWORD length =
+        GetEnvironmentVariableW(L"LOCALAPPDATA", buffer, MAX_PATH);
+    if (length == 0 || length >= MAX_PATH) {
+      throw std::runtime_error("Nao foi possivel ler LOCALAPPDATA.");
     }
 
     std::filesystem::path folder =
-        std::filesystem::path(localAppData) / "OrcamentosGrameira";
+        std::filesystem::path(buffer) / L"OrcamentosGrameira";
     std::filesystem::create_directories(folder);
 
-    return (folder / name).string();
+    const auto utf8 = (folder / std::filesystem::path(name)).u8string();
+    return std::string(utf8.begin(), utf8.end());
   }
 };
 
