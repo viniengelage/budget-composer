@@ -126,6 +126,21 @@ Acesso a SQLite só via a interface `Db` de `@main/db/database`. Repositórios
 ficam em `src/main/modules/<dominio>/`. Migração nova = mais um array em
 `MIGRATIONS`; nunca edite uma migração já publicada.
 
+O arquivo fica em `Utils.paths.userData`, que resolve para
+`<base>/<identifier>/<canal>/`. **Isso sobrevive a atualização** — verificado
+reinstalando uma build por cima e conferindo que os dados continuaram lá. Não
+mova o banco para dentro do bundle: ele é substituído inteiro a cada update.
+
+Repare no **canal** no caminho: uma build `canary` e uma `stable` usam bancos
+diferentes. É de propósito, mas explica "sumiram meus orçamentos" ao trocar de
+canal durante testes.
+
+Antes de aplicar uma atualização, `backupDatabase` grava uma cópia em
+`<identifier>/backups/` (um nível **acima** da pasta do canal). Use sempre
+`VACUUM INTO`, nunca cópia de arquivo: com WAL ligado, copiar só o `.db` deixa
+para trás as transações que ainda estão no `-wal` e produz um backup que abre
+sem erro e com dados faltando.
+
 ### Testes
 `bun test`, arquivos `*.test.ts` ao lado do código. Cubra **lógica de domínio**
 (dinheiro, datas, cálculo de orçamento) e **repositórios** (rodam contra

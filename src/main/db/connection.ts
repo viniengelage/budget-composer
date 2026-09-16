@@ -26,3 +26,12 @@ export function getDatabase(): Db {
 export function databaseLocation(): string {
   return join(Utils.paths.userData, DATABASE_FILE);
 }
+
+/**
+ * Um nível **acima** da pasta do canal, de propósito. `userData` já sobrevive a
+ * atualização (testado), mas a cópia de segurança não pode morar no mesmo lugar
+ * que ela existe para proteger.
+ */
+export function backupsLocation(): string {
+  return join(Utils.paths.userData, "..", "backups");
+}

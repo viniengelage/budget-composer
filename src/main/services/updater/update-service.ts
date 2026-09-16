@@ -1,5 +1,7 @@
 import { Updater } from "electrobun/main";
 
+import { backupDatabase } from "@main/db/backup";
+import { backupsLocation, getDatabase } from "@main/db/connection";
 import type { UpdateSnapshot, UpdateState } from "@shared/update";
 
 /**
@@ -56,8 +58,24 @@ export function scheduleUpdateCheck(): void {
   setTimeout(() => void checkAndDownloadUpdate(), FIRST_CHECK_DELAY_MS);
 }
 
-/** Fecha o programa, troca os arquivos e abre a versão nova. */
+/**
+ * Guarda uma cópia dos orçamentos e só então fecha o programa, troca os
+ * arquivos e abre a versão nova.
+ *
+ * Se a cópia falhar, a atualização **não acontece**. Atualizar é opcional;
+ * perder o histórico de orçamentos do negócio não tem volta. E como quem pediu
+ * a atualização foi a pessoa, ela merece saber por que não aconteceu.
+ */
 export async function applyDownloadedUpdate(): Promise<void> {
+  try {
+    backupDatabase(getDatabase(), backupsLocation());
+  } catch {
+    throw new Error(
+      "Não consegui guardar uma cópia de segurança dos seus orçamentos, " +
+        "então não atualizei. Seus dados estão a salvo. Tente de novo mais tarde.",
+    );
+  }
+
   await Updater.applyUpdate();
 }
 

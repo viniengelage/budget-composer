@@ -3,6 +3,7 @@ import { Button, Icon } from "@/components/ui";
 export interface UpdateBannerProps {
   version: string | null;
   applying: boolean;
+  error: string | null;
   onApply: () => void;
   onDismiss: () => void;
 }
@@ -15,9 +16,23 @@ export interface UpdateBannerProps {
 export function UpdateBanner({
   version,
   applying,
+  error,
   onApply,
   onDismiss,
 }: UpdateBannerProps) {
+  if (error) {
+    return (
+      <div className="flex items-center gap-4 border-b border-warning-600 bg-warning-50 px-10 py-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-warning-600 text-white">
+          <Icon name="warning-circle" size={24} />
+        </span>
+        <p className="min-w-0 flex-1 font-semibold text-warning-600">{error}</p>
+        <Button label="Tentar de novo" variant="secondary" onClick={onApply} />
+        <Button label="Fechar aviso" variant="ghost" onClick={onDismiss} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-4 border-b border-brand-300 bg-brand-soft px-10 py-4">
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white">

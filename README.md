@@ -106,6 +106,22 @@ A comparação é por **hash** do pacote, não por número de versão. Quando ex
 Release anterior, o Hutch gera um patch binário e a atualização baixa poucos
 kilobytes; se o patch não existir, cai para o pacote inteiro.
 
+### Os orçamentos não são apagados na atualização
+
+O banco fica em `Utils.paths.userData`, fora do bundle do aplicativo — a
+atualização troca os arquivos do programa e não encosta nos dados. Isso foi
+verificado na prática: gravamos um registro, compilamos outra versão,
+instalamos por cima e o registro continuou lá.
+
+Mesmo assim, antes de aplicar qualquer atualização o app grava uma cópia do
+banco em `<identifier>/backups/`, guardando as 5 mais recentes. A pasta fica um
+nível **acima** da pasta do canal, porque uma cópia de segurança não pode morar
+no mesmo lugar que ela existe para proteger. Se a cópia falhar, a atualização
+não acontece e o programa explica por quê.
+
+Um detalhe que confunde em teste: o caminho inclui o **canal**, então uma build
+`canary` e uma `stable` usam bancos diferentes.
+
 ### Enquanto o repositório for privado, isto não funciona
 
 `https://github.com/.../releases/latest/download/...` responde **404 sem

@@ -30,6 +30,7 @@ function UpdateSlot() {
     <UpdateBanner
       version={update.version}
       applying={applyUpdate.isPending}
+      error={applyUpdate.error?.message ?? null}
       onApply={() => applyUpdate.mutate()}
       onDismiss={() => setDismissed(true)}
     />
