@@ -121,6 +121,14 @@ async function buildWindows(): Promise<void> {
   // e o nosso rnw-sqlite — nenhum deles compila no ambiente padrão.
   const sdkVersion = process.env.WINDOWS_SDK_VERSION ?? "10.0.26100.0";
 
+  // O projeto Windows do @react-native-async-storage falha a verificacao de
+  // dependencias transitivas do Windows App SDK 1.8. A propria mensagem de
+  // erro aponta este flag como saida. E limitacao do modulo, nao nossa.
+  const msbuildProps = [
+    `WindowsTargetPlatformVersion=${sdkVersion}`,
+    "WindowsAppSDKVerifyTransitiveDependencies=false",
+  ].join(";");
+
   await run(
     [
       "bunx",
@@ -134,7 +142,7 @@ async function buildWindows(): Promise<void> {
       "--no-packager",
       "--logging",
       "--msbuildprops",
-      `WindowsTargetPlatformVersion=${sdkVersion}`,
+      msbuildProps,
     ],
     `Compilando o app Windows (Release x64, SDK ${sdkVersion})`,
   );

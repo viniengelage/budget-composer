@@ -20,6 +20,10 @@
     <ReactNativeWindowsDir Condition="'$(ReactNativeWindowsDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'node_modules\react-native-windows\package.json'))\node_modules\react-native-windows\</ReactNativeWindowsDir>
     <ReactNativeDir Condition="'$(ReactNativeDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'node_modules\react-native\package.json'))\node_modules\react-native\</ReactNativeDir>
     <RunAutolinkCheck>false</RunAutolinkCheck>
+    <!-- Modulo atribuido (REACT_MODULE), sem spec de codegen. Sem isto o RNW
+         tenta rodar `codegen-windows` via npx, que falha com
+         "unknown command" porque o CLI baixado nao traz o plugin do RNW. -->
+    <RunCodegenWindows>false</RunCodegenWindows>
   </PropertyGroup>
   <Import Project="$(ReactNativeWindowsDir)\PropertySheets\External\Microsoft.ReactNative.WindowsSdk.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
